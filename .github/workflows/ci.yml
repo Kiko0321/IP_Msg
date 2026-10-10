@@ -43,6 +43,10 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # No-op until a "test" script is added (MSG-25).
+      - name: Test
+        run: npm test --if-present
+
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 15

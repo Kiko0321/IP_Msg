@@ -1,9 +1,11 @@
-# Enforces the branch flow: feature branches -> dev, and main only moves by fast-forwarding to dev.
+# Enforces the branch flow:
+#   ticket branch (created from dev) -> PR into dev -> dev fast-forwards main.
 name: Branch flow
 
 on:
   pull_request:
-    branches: [main]
+    branches: [dev, main]
+    types: [opened, reopened, synchronize, edited]
   push:
     branches: [main]
 
@@ -12,8 +14,8 @@ permissions:
 
 jobs:
   # Only dev may be proposed into main.
-  pr-source:
-    if: github.event_name == 'pull_request'
+  pr-into-main:
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Require dev as the head branch
@@ -21,6 +23,32 @@ jobs:
         run: |
           echo "::error::PRs into main must come from dev (got '${{ github.head_ref }}'). Target dev instead."
           exit 1
+
+  # Every ticket gets its own branch, created from the latest dev.
+  pr-into-dev:
+    if: github.event_name == 'pull_request' && github.base_ref == 'dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require a ticket branch name
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [[ ! "$HEAD_REF" =~ ^(feat|fix|chore|docs|ci|refactor|test)/msg-[0-9]+-[a-z0-9-]+$ ]]; then
+            echo "::error::Branch '$HEAD_REF' must be named <type>/msg-<NN>-<slug>, e.g. feat/msg-05-supabase-client."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Require the branch to contain the latest dev
+        run: |
+          if ! git merge-base --is-ancestor origin/dev HEAD; then
+            echo "::error::This branch is not based on the latest dev. Run: git fetch origin && git rebase origin/dev (or use 'Update branch' on the PR)."
+            exit 1
+          fi
 
   # Every commit on main must already be on dev, so main stays an ancestor of dev.
   main-is-ancestor-of-dev:

@@ -1,0 +1,98 @@
+# Keeps tickets and the kanban board in sync with the branch flow:
+#   ticket branch created   -> In Progress
+#   PR opened into dev      -> In Review
+#   PR merged into dev      -> Done, issue closed, ticket branch deleted
+#
+# Setup (repository settings):
+#   secret   PROJECT_TOKEN   PAT with "project" + "repo" scopes (the default GITHUB_TOKEN can't edit user projects)
+#   variable PROJECT_NUMBER  number from the board URL .../projects/<number>
+#   variable PROJECT_OWNER   optional, defaults to the repository owner
+#   variables STATUS_IN_PROGRESS / STATUS_IN_REVIEW / STATUS_DONE  optional, column names if they differ
+name: Ticket board
+
+on:
+  create:
+  pull_request:
+    branches: [dev]
+    types: [opened, reopened, ready_for_review, closed]
+
+permissions:
+  contents: write # delete merged ticket branches
+  issues: write # close tickets
+
+concurrency:
+  group: ticket-board-${{ github.event.pull_request.head.ref || github.ref_name }}
+
+env:
+  REPO: ${{ github.repository }}
+  PROJECT_OWNER: ${{ vars.PROJECT_OWNER || github.repository_owner }}
+  PROJECT_NUMBER: ${{ vars.PROJECT_NUMBER }}
+  # Falls back to the built-in token so issue lookup/closing still work before PROJECT_TOKEN is added.
+  GH_TOKEN: ${{ secrets.PROJECT_TOKEN || github.token }}
+  HAS_PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN != '' }}
+
+jobs:
+  in-progress:
+    if: github.event_name == 'create' && github.event.ref_type == 'branch' && contains(github.event.ref, 'msg-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash .github/scripts/ticket-status.sh "$BRANCH" "$STATUS"
+        env:
+          BRANCH: ${{ github.event.ref }}
+          STATUS: ${{ vars.STATUS_IN_PROGRESS || 'In Progress' }}
+
+  in-review:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed' && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+      - run: bash .github/scripts/ticket-status.sh "$BRANCH" "$STATUS"
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          STATUS: ${{ vars.STATUS_IN_REVIEW || 'In Review' }}
+
+  done:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.event.pull_request.head.ref }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Move ticket to Done
+        id: board
+        env:
+          STATUS: ${{ vars.STATUS_DONE || 'Done' }}
+        run: |
+          # A board failure must not stop the ticket from being closed.
+          issue=$(bash .github/scripts/ticket-status.sh "$BRANCH" "$STATUS") || echo "::warning::Board update failed."
+          echo "issue=$issue" >> "$GITHUB_OUTPUT"
+
+      - name: Close ticket
+        if: steps.board.outputs.issue != ''
+        env:
+          ISSUE: ${{ steps.board.outputs.issue }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          state=$(gh issue view "$ISSUE" --repo "$REPO" --json state --jq .state)
+          if [[ "$state" == "OPEN" ]]; then
+            gh issue close "$ISSUE" --repo "$REPO" --comment "Completed in #$PR (merged into dev)."
+          fi
+
+      - name: Delete ticket branch
+        # Never delete the long-lived branches, and skip branches from forks.
+        if: >-
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.event.pull_request.head.ref != 'dev' &&
+          github.event.pull_request.head.ref != 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X DELETE "repos/$REPO/git/refs/heads/$BRANCH" \
+            || echo "::notice::Branch $BRANCH was already deleted."
