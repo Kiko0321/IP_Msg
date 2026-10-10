@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { sendMessage } from "@/app/chat/[id]/actions";
+import { sendMessage } from "@/app/(app)/chat/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
 import type { ChatMember, ChatMessage, DisplayMessage } from "@/lib/chat/types";
 import { MessageInput } from "./message-input";

@@ -70,7 +70,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   ) : undefined;
 
   return (
-    <main className="mx-auto flex h-dvh w-full max-w-2xl flex-col">
+    <main className="mx-auto flex h-full w-full max-w-3xl flex-col">
       <ChatHeader title={title} subtitle={subtitle} avatarUrl={isGroup ? null : others[0]?.avatar_url} />
       <ChatView
         conversationId={conversation.id}

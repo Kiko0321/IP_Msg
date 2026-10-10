@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { markConversationRead } from "@/app/chat/[id]/read-actions";
+import { markConversationRead } from "@/app/(app)/chat/[id]/read-actions";
 
 // Marks the open conversation read: on open, whenever a newer message is shown, and when the
 // tab becomes visible again. Renders nothing.
