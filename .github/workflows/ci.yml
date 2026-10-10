@@ -55,3 +55,22 @@ jobs:
 
       - name: Build dev image
         run: docker build -f Dockerfile.dev -t ip-messenger-dev .
+
+      # Placeholder Supabase values: enough to build and serve pages that don't call Supabase.
+      - name: Build production image
+        run: >-
+          docker build -t ip-messenger
+          --build-arg NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
+          --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_placeholder
+          .
+
+      - name: Smoke-test production image
+        run: |
+          docker run -d --name web -p 3000:3000 ip-messenger
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://localhost:3000/sign-in; then echo "ready"; break; fi
+            sleep 1
+          done
+          curl -fsS -o /dev/null -w "GET /sign-in -> %{http_code}\n" http://localhost:3000/sign-in
+          docker logs web
+          test "$(docker exec web whoami)" = "node"
