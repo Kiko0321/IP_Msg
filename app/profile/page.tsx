@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { AvatarUpload } from "./avatar-upload";
 import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = { title: "Profile · IP Messenger" };
@@ -13,7 +14,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, status_message")
+    .select("display_name, status_message, avatar_url")
     .eq("id", data.claims.sub)
     .maybeSingle();
 
@@ -26,6 +27,12 @@ export default async function ProfilePage() {
         <h1 className="text-2xl font-bold">Your profile</h1>
         <p className="text-sm text-neutral-500">{data.claims.email}</p>
       </div>
+
+      <AvatarUpload
+        userId={data.claims.sub}
+        name={profile?.display_name ?? data.claims.email ?? "?"}
+        url={profile?.avatar_url ?? null}
+      />
 
       <ProfileForm
         initial={{

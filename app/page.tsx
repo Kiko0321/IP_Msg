@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut } from "./(auth)/actions";
+import { Avatar } from "@/components/avatar";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
@@ -9,7 +10,7 @@ export default async function Home() {
 
   // The profile is created by the sign-up trigger (MSG-07); metadata covers the moment before it exists.
   const { data: profile } = claims
-    ? await supabase.from("profiles").select("display_name, status_message").eq("id", claims.sub).maybeSingle()
+    ? await supabase.from("profiles").select("display_name, status_message, avatar_url").eq("id", claims.sub).maybeSingle()
     : { data: null };
   const displayName =
     profile?.display_name ?? (claims?.user_metadata as { display_name?: string } | undefined)?.display_name;
@@ -20,6 +21,7 @@ export default async function Home() {
 
       {claims ? (
         <>
+          <Avatar name={displayName ?? claims.email ?? "?"} url={profile?.avatar_url} size="lg" />
           <p className="text-neutral-500">
             Signed in as <span className="font-medium text-foreground">{displayName ?? claims.email}</span>
           </p>
