@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatView } from "@/components/chat/chat-view";
+import { OnlineStatus } from "@/components/presence/online-status";
 import type { ChatMember, ChatMessage } from "@/lib/chat/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,7 +17,7 @@ type ConversationRow = {
   title: string | null;
   conversation_members: {
     user_id: string;
-    profiles: { display_name: string; avatar_url: string | null } | null;
+    profiles: { display_name: string; avatar_url: string | null; last_seen_at: string | null } | null;
   }[];
 };
 
@@ -32,7 +33,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   // RLS: non-members get no row, so they see a 404 rather than someone else's chat.
   const { data: conversationData } = await supabase
     .from("conversations")
-    .select("id, kind, title, conversation_members(user_id, profiles(display_name, avatar_url))")
+    .select("id, kind, title, conversation_members(user_id, profiles(display_name, avatar_url, last_seen_at))")
     .eq("id", id)
     .maybeSingle();
   const conversation = conversationData as unknown as ConversationRow | null;
@@ -61,7 +62,12 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   const title = isGroup
     ? (conversation.title ?? (others.map((m) => m.display_name).join(", ") || "Group"))
     : (others[0]?.display_name ?? "Unknown user");
-  const subtitle = isGroup ? `${others.length + 1} members` : undefined;
+  const otherMember = conversation.conversation_members.find((m) => m.user_id !== me);
+  const subtitle = isGroup ? (
+    `${others.length + 1} members`
+  ) : otherMember ? (
+    <OnlineStatus userId={otherMember.user_id} lastSeenAt={otherMember.profiles?.last_seen_at ?? null} />
+  ) : undefined;
 
   return (
     <main className="mx-auto flex h-dvh w-full max-w-2xl flex-col">
