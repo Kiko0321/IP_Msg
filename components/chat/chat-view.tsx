@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { sendMessage } from "@/app/chat/[id]/actions";
+import { createClient } from "@/lib/supabase/client";
 import type { ChatMember, ChatMessage, DisplayMessage } from "@/lib/chat/types";
 import { MessageInput } from "./message-input";
 import { MessageList } from "./message-list";
@@ -23,6 +24,33 @@ export function ChatView({
 }) {
   const [local, setLocal] = useState<DisplayMessage[]>([]);
   const [, startTransition] = useTransition();
+
+  // Live updates (MSG-18): new rows in this conversation arrive over Supabase Realtime.
+  // RLS is applied per subscriber, so only members receive them.
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`messages:${conversationId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+        (payload) => {
+          const row = payload.new as ChatMessage;
+          setLocal((list) => {
+            if (list.some((m) => m.id === row.id)) return list;
+            // Our own message can arrive here before sendMessage returns; the pending
+            // placeholder is swapped for it then, so don't add a duplicate now.
+            const pendingOwn = row.sender_id === currentUserId && list.some((m) => m.status === "sending" && m.content === row.content);
+            return pendingOwn ? list : [...list, row];
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId, currentUserId]);
 
   const serverIds = new Set(initialMessages.map((m) => m.id));
   const messages: DisplayMessage[] = [...initialMessages, ...local.filter((m) => !serverIds.has(m.id))].sort(
