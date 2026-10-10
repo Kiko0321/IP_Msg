@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { sendMessage } from "@/app/(app)/chat/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
 import type { ChatMember, ChatMessage, DisplayMessage } from "@/lib/chat/types";
@@ -26,30 +26,61 @@ export function ChatView({
   const [local, setLocal] = useState<DisplayMessage[]>([]);
   const [, startTransition] = useTransition();
 
+  // Newest message time currently shown; the catch-up query below starts from here.
+  const latestAtRef = useRef<string | undefined>(undefined);
+
   // Live updates (MSG-18): new rows in this conversation arrive over Supabase Realtime.
   // RLS is applied per subscriber, so only members receive them.
   useEffect(() => {
     const supabase = createClient();
-    const channel = supabase
-      .channel(`messages:${conversationId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
-        (payload) => {
-          const row = payload.new as ChatMessage;
-          setLocal((list) => {
-            if (list.some((m) => m.id === row.id)) return list;
-            // Our own message can arrive here before sendMessage returns; the pending
-            // placeholder is swapped for it then, so don't add a duplicate now.
-            const pendingOwn = row.sender_id === currentUserId && list.some((m) => m.status === "sending" && m.content === row.content);
-            return pendingOwn ? list : [...list, row];
-          });
-        },
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | undefined;
+    let cancelled = false;
 
+    const addRow = (row: ChatMessage) =>
+      setLocal((list) => {
+        if (list.some((m) => m.id === row.id)) return list;
+        // Our own message can arrive here before sendMessage returns; the pending
+        // placeholder is swapped for it then, so don't add a duplicate now.
+        const pendingOwn = row.sender_id === currentUserId && list.some((m) => m.status === "sending" && m.content === row.content);
+        return pendingOwn ? list : [...list, row];
+      });
+
+    // Messages sent while the channel was connecting (or reconnecting) never arrive as events,
+    // so fetch anything newer than what is on screen each time the subscription becomes active.
+    async function catchUp() {
+      let query = supabase
+        .from("messages")
+        .select("id, sender_id, content, created_at, edited_at")
+        .eq("conversation_id", conversationId)
+        .order("created_at")
+        .limit(100);
+      if (latestAtRef.current) query = query.gt("created_at", latestAtRef.current);
+      const { data } = await query;
+      if (!cancelled) (data as ChatMessage[] | null)?.forEach(addRow);
+    }
+
+    async function subscribe() {
+      // Make sure Realtime uses the signed-in session, not the anonymous key: with RLS, an
+      // anonymous subscriber receives no message events at all.
+      await supabase.realtime.setAuth();
+      if (cancelled) return;
+
+      channel = supabase
+        .channel(`messages:${conversationId}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+          (payload) => addRow(payload.new as ChatMessage),
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") void catchUp();
+        });
+    }
+
+    void subscribe();
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) void supabase.removeChannel(channel);
     };
   }, [conversationId, currentUserId]);
 
@@ -57,6 +88,10 @@ export function ChatView({
   const messages: DisplayMessage[] = [...initialMessages, ...local.filter((m) => !serverIds.has(m.id))].sort(
     (a, b) => a.created_at.localeCompare(b.created_at),
   );
+
+  useEffect(() => {
+    latestAtRef.current = messages.filter((m) => !m.status).at(-1)?.created_at;
+  });
 
   function handleSend(content: string) {
     const tempId = `local-${crypto.randomUUID()}`;
