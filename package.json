@@ -13,7 +13,8 @@
     "db:status": "supabase migration list",
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
-    "db:stop": "supabase stop"
+    "db:stop": "supabase stop",
+    "db:check": "supabase db query --linked -f supabase/checks/rls_membership_check.sql"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

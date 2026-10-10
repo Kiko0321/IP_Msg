@@ -80,4 +80,4 @@ To point the app at it, put the printed API URL and publishable key in `.env.loc
 
 ### Checks
 
-`supabase/checks/rls_membership_check.sql` proves that non-members can't read or post in a conversation. Paste it into the SQL Editor; it rolls back and leaves no data.
+`supabase/checks/rls_membership_check.sql` proves that non-members can't read or post in a conversation. Run `npm run db:check` (linked project), or paste it into the SQL Editor. It rolls back and leaves no data.
