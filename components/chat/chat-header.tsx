@@ -7,7 +7,7 @@ export function ChatHeader({
   avatarUrl,
 }: {
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   avatarUrl?: string | null;
 }) {
   return (
@@ -18,7 +18,7 @@ export function ChatHeader({
       <Avatar name={title} url={avatarUrl} size="sm" />
       <div className="min-w-0">
         <h1 className="truncate font-semibold">{title}</h1>
-        {subtitle && <p className="truncate text-xs text-neutral-500">{subtitle}</p>}
+        {subtitle && <div className="truncate text-xs text-neutral-500">{subtitle}</div>}
       </div>
     </header>
   );

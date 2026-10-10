@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/avatar";
+import { OnlineDot } from "@/components/presence/online-status";
 import { createClient } from "@/lib/supabase/server";
 import { startConversation } from "./actions";
 
@@ -80,7 +81,10 @@ export default async function ContactsPage({
         <ul className="flex flex-col divide-y divide-neutral-200 dark:divide-neutral-800">
           {contacts.map((contact) => (
             <li key={contact.id} className="flex items-center gap-3 py-3">
-              <Avatar name={contact.display_name} url={contact.avatar_url} />
+              <span className="relative shrink-0">
+                <Avatar name={contact.display_name} url={contact.avatar_url} />
+                <OnlineDot userId={contact.id} />
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{contact.display_name}</p>
                 {contact.status_message && (
