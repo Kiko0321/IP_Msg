@@ -36,6 +36,9 @@ export default async function Home() {
             <Link href="/profile" className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700">
               Edit profile
             </Link>
+            <Link href="/settings" className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700">
+              Settings
+            </Link>
             <form action={signOut}>
               <button type="submit" className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700">
                 Sign out
