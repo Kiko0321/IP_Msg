@@ -1,0 +1,39 @@
+# Enforces the branch flow: feature branches -> dev, and main only moves by fast-forwarding to dev.
+name: Branch flow
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # Only dev may be proposed into main.
+  pr-source:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require dev as the head branch
+        if: github.head_ref != 'dev'
+        run: |
+          echo "::error::PRs into main must come from dev (got '${{ github.head_ref }}'). Target dev instead."
+          exit 1
+
+  # Every commit on main must already be on dev, so main stays an ancestor of dev.
+  main-is-ancestor-of-dev:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check main is contained in dev
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/dev; then
+            echo "::error::main ($GITHUB_SHA) is not an ancestor of dev. Only fast-forward main to dev: git merge --ff-only dev"
+            exit 1
+          fi
