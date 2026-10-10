@@ -4,6 +4,14 @@ A modern real-time messenger inspired by IP Messenger, built with Next.js and Su
 
 ## Development
 
+### Environment
+
+Copy `.env.example` to `.env.local` and fill in the values from your Supabase project (Project Settings → API Keys / Data API).
+
+```bash
+cp .env.example .env.local
+```
+
 ### With Docker (recommended)
 
 ```bash
