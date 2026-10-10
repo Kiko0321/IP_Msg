@@ -37,6 +37,12 @@ export default async function ChatsPage() {
 
   const conversations = (data ?? []) as unknown as Conversation[];
 
+  // MSG-19: unread messages per conversation (others' messages after this user's last_read_at).
+  const { data: unreadRows } = await supabase.rpc("unread_counts");
+  const unread = new Map<string, number>(
+    ((unreadRows ?? []) as { conversation_id: string; unread: number }[]).map((r) => [r.conversation_id, Number(r.unread)]),
+  );
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col gap-6 p-6">
       <div className="flex items-end justify-between gap-4">
@@ -78,6 +84,7 @@ export default async function ChatsPage() {
                 ? (conversation.title ?? others.map((m) => m.profiles?.display_name).filter(Boolean).join(", "))
                 : (other?.display_name ?? "Unknown user");
             const last = conversation.messages[0];
+            const unreadCount = unread.get(conversation.id) ?? 0;
 
             return (
               <li key={conversation.id}>
@@ -88,12 +95,22 @@ export default async function ChatsPage() {
                   <Avatar name={name || "?"} url={conversation.kind === "direct" ? other?.avatar_url : null} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className="truncate font-medium">{name || "Group"}</p>
+                      <p className={`truncate ${unreadCount ? "font-bold" : "font-medium"}`}>{name || "Group"}</p>
                       <LastActivity at={last?.created_at ?? conversation.last_message_at} />
                     </div>
-                    <p className="truncate text-sm text-neutral-500">
-                      {last ? `${last.sender_id === me ? "You: " : ""}${last.content}` : "No messages yet"}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className={`truncate text-sm ${unreadCount ? "text-foreground" : "text-neutral-500"}`}>
+                        {last ? `${last.sender_id === me ? "You: " : ""}${last.content}` : "No messages yet"}
+                      </p>
+                      {unreadCount > 0 && (
+                        <span
+                          aria-label={`${unreadCount} unread`}
+                          className="shrink-0 rounded-full bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white"
+                        >
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Link>
               </li>

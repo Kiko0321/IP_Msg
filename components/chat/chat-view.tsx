@@ -5,6 +5,7 @@ import { sendMessage } from "@/app/chat/[id]/actions";
 import type { ChatMember, ChatMessage, DisplayMessage } from "@/lib/chat/types";
 import { MessageInput } from "./message-input";
 import { MessageList } from "./message-list";
+import { ReadMarker } from "./read-marker";
 
 // Owns the conversation's client-side message state. Messages from the server (props) are merged
 // with this user's local ones (sending, failed, or saved but not yet in the props).
@@ -57,6 +58,7 @@ export function ChatView({
     <>
       <MessageList messages={messages} members={members} currentUserId={currentUserId} showSenderNames={isGroup} />
       <MessageInput onSend={handleSend} />
+      <ReadMarker conversationId={conversationId} latestMessageAt={messages.at(-1)?.created_at} />
     </>
   );
 }
