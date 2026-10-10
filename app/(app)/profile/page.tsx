@@ -19,11 +19,8 @@ export default async function ProfilePage() {
     .maybeSingle();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
+    <main className="flex flex-col items-center gap-6 p-6 pt-8">
       <div className="flex w-full max-w-md flex-col gap-1">
-        <Link href="/" className="text-sm text-neutral-500 underline">
-          ← Back
-        </Link>
         <h1 className="text-2xl font-bold">Your profile</h1>
         <p className="text-sm text-neutral-500">{data.claims.email}</p>
         <Link href="/network" className="text-sm text-neutral-500 underline">

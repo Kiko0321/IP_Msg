@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import { OnlineDot } from "@/components/presence/online-status";
@@ -46,11 +45,8 @@ export default async function ContactsPage({
   const contacts = (data ?? []) as Contact[];
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col gap-6 p-6">
+    <main className="mx-auto flex w-full max-w-xl flex-col gap-6 p-6">
       <div className="flex flex-col gap-1">
-        <Link href="/" className="text-sm text-neutral-500 underline">
-          ← Back
-        </Link>
         <h1 className="text-2xl font-bold">Contacts</h1>
       </div>
 

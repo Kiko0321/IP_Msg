@@ -17,7 +17,7 @@ export default async function NetworkPage() {
   const info = connectionInfo(await headers());
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col gap-6 p-6">
+    <main className="mx-auto flex w-full max-w-xl flex-col gap-6 p-6">
       <div className="flex flex-col gap-1">
         <Link href="/profile" className="text-sm text-neutral-500 underline">
           ← Profile

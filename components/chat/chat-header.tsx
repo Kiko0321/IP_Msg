@@ -12,7 +12,7 @@ export function ChatHeader({
 }) {
   return (
     <header className="flex items-center gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
-      <Link href="/chats" aria-label="Back to chats" className="rounded-md px-2 py-1 text-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-900">
+      <Link href="/chats" aria-label="Back to chats" className="rounded-md px-2 py-1 text-lg text-neutral-500 hover:bg-neutral-100 md:hidden dark:hover:bg-neutral-900">
         ←
       </Link>
       <Avatar name={title} url={avatarUrl} size="sm" />
