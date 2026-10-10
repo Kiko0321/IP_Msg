@@ -26,6 +26,9 @@ export default async function ProfilePage() {
         </Link>
         <h1 className="text-2xl font-bold">Your profile</h1>
         <p className="text-sm text-neutral-500">{data.claims.email}</p>
+        <Link href="/network" className="text-sm text-neutral-500 underline">
+          Your connection (IP)
+        </Link>
       </div>
 
       <AvatarUpload
