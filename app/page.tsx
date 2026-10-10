@@ -6,7 +6,13 @@ export default async function Home() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
-  const displayName = (claims?.user_metadata as { display_name?: string } | undefined)?.display_name;
+
+  // The profile is created by the sign-up trigger (MSG-07); metadata covers the moment before it exists.
+  const { data: profile } = claims
+    ? await supabase.from("profiles").select("display_name").eq("id", claims.sub).maybeSingle()
+    : { data: null };
+  const displayName =
+    profile?.display_name ?? (claims?.user_metadata as { display_name?: string } | undefined)?.display_name;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">

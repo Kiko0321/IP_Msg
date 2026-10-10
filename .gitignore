@@ -20,6 +20,9 @@ next-env.d.ts
 # logs
 npm-debug.log*
 
+# Claude Code per-user permissions
+/.claude/settings.local.json
+
 # misc
 .DS_Store
 *.pem
