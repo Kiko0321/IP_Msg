@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { ChatMember, ChatMessage } from "@/lib/chat/types";
+import type { ChatMember, DisplayMessage } from "@/lib/chat/types";
 
 // Client component: times render in the viewer's time zone, and MSG-18 adds live updates here.
 export function MessageList({
@@ -10,7 +10,7 @@ export function MessageList({
   currentUserId,
   showSenderNames,
 }: {
-  messages: ChatMessage[];
+  messages: DisplayMessage[];
   members: Record<string, ChatMember>;
   currentUserId: string;
   showSenderNames: boolean;
@@ -56,7 +56,7 @@ export function MessageList({
                 mine
                   ? "self-end bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
                   : "self-start bg-neutral-100 dark:bg-neutral-800"
-              } ${newSender ? "mt-1" : ""}`}
+              } ${newSender ? "mt-1" : ""} ${message.status === "sending" ? "opacity-60" : ""}`}
             >
               <p className="whitespace-pre-wrap break-words">{message.content}</p>
               <time
@@ -66,7 +66,13 @@ export function MessageList({
               >
                 {date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                 {message.edited_at && " · edited"}
+                {message.status === "sending" && " · Sending…"}
               </time>
+              {message.status === "failed" && (
+                <span role="alert" className="self-end text-[10px] font-medium text-red-400">
+                  Not sent
+                </span>
+              )}
             </div>
           </li>
         );

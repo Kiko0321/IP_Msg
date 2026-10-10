@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { ChatHeader } from "@/components/chat/chat-header";
-import { MessageList } from "@/components/chat/message-list";
+import { ChatView } from "@/components/chat/chat-view";
 import type { ChatMember, ChatMessage } from "@/lib/chat/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -66,7 +66,13 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   return (
     <main className="mx-auto flex h-dvh w-full max-w-2xl flex-col">
       <ChatHeader title={title} subtitle={subtitle} avatarUrl={isGroup ? null : others[0]?.avatar_url} />
-      <MessageList messages={messages} members={members} currentUserId={me} showSenderNames={isGroup} />
+      <ChatView
+        conversationId={conversation.id}
+        initialMessages={messages}
+        members={members}
+        currentUserId={me}
+        isGroup={isGroup}
+      />
     </main>
   );
 }
