@@ -7,6 +7,8 @@ on:
     branches: [dev, main]
   push:
     branches: [dev, main]
+  # Allows running CI by hand on any branch from the Actions tab or `gh workflow run`.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
