@@ -5,8 +5,9 @@ import { getSupabaseEnv } from "./env";
 // Supabase client for Server Components, Server Actions and Route Handlers.
 // Create one per request; never share it across requests.
 export async function createClient() {
-  const { url, publishableKey } = getSupabaseEnv();
+  // cookies() first: it marks the route dynamic, so builds without env vars (CI) never prerender it.
   const cookieStore = await cookies();
+  const { url, publishableKey } = getSupabaseEnv();
 
   return createServerClient(url, publishableKey, {
     cookies: {
