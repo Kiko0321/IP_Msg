@@ -43,11 +43,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Require the branch to contain the latest dev
+      # Warn only: a phase's PRs are merged together, so later PRs in the phase are expected to fall
+      # behind dev as earlier ones land. GitHub itself blocks merges that conflict.
+      - name: Check the branch is up to date with dev
         run: |
-          if ! git merge-base --is-ancestor origin/dev HEAD; then
-            echo "::error::This branch is not based on the latest dev. Run: git fetch origin && git rebase origin/dev (or use 'Update branch' on the PR)."
-            exit 1
+          behind=$(git rev-list --count HEAD..origin/dev)
+          if [ "$behind" -gt 0 ]; then
+            echo "::warning::This branch is $behind commit(s) behind dev. If the PR shows conflicts, run: git fetch origin && git merge origin/dev"
           fi
 
   # Every commit on main must already be on dev, so main stays an ancestor of dev.

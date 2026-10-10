@@ -33,8 +33,8 @@ npm run dev
 
 ### Branch flow
 
-1. Each ticket gets its own branch from the latest `dev`: `git fetch origin && git checkout -b feat/msg-NN-<slug> origin/dev`.
-2. Open a PR into `dev`. CI and the branch-flow checks must pass.
+1. Each ticket gets its own branch from the latest `dev`: `git fetch origin && git checkout -b feat/msg-NN-<slug> origin/dev`. A ticket that depends on an unmerged ticket in the same phase branches from that ticket's branch instead.
+2. Open a PR into `dev`. CI and the branch-flow checks must pass. A phase's PRs are merged together, in dependency order.
 3. On merge, the ticket is closed, moved to Done on the board, and its branch is deleted (`.github/workflows/ticket-board.yml`).
 4. Releases fast-forward `main` to `dev` (`git merge --ff-only dev`), so `main` is always an ancestor of `dev`.
 
