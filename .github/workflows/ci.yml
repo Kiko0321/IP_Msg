@@ -74,3 +74,55 @@ jobs:
           curl -fsS -o /dev/null -w "GET /sign-in -> %{http_code}\n" http://localhost:3000/sign-in
           docker logs web
           test "$(docker exec web whoami)" = "node"
+
+  # MSG-26: two-user browser test against the real Supabase project. Runs only when the
+  # test-user secrets are configured (see e2e/README.md); otherwise it is skipped.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: verify
+    env:
+      E2E_USER_A_EMAIL: ${{ secrets.E2E_USER_A_EMAIL }}
+      E2E_USER_A_PASSWORD: ${{ secrets.E2E_USER_A_PASSWORD }}
+      E2E_USER_B_EMAIL: ${{ secrets.E2E_USER_B_EMAIL }}
+      E2E_USER_B_PASSWORD: ${{ secrets.E2E_USER_B_PASSWORD }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - name: Check for test-user secrets
+        id: secrets
+        run: |
+          if [ -n "$E2E_USER_A_EMAIL" ] && [ -n "$E2E_USER_B_EMAIL" ] && [ -n "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::E2E secrets not configured; skipping end-to-end tests (see e2e/README.md)."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.secrets.outputs.ready == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.secrets.outputs.ready == 'true'
+        with:
+          node-version: 24
+          cache: npm
+
+      - if: steps.secrets.outputs.ready == 'true'
+        run: npm ci
+
+      - if: steps.secrets.outputs.ready == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run end-to-end tests
+        if: steps.secrets.outputs.ready == 'true'
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure() && steps.secrets.outputs.ready == 'true'
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
