@@ -44,3 +44,40 @@ npm run dev
 npm run typecheck
 npm run lint
 ```
+
+## Database
+
+Schema changes live in `supabase/migrations/` as timestamped SQL files and are applied with the Supabase CLI (installed as a dev dependency). Every migration is safe to re-run.
+
+### Hosted project
+
+One-time setup:
+
+```bash
+npx supabase login
+npx supabase link --project-ref <project-ref>   # asks for the database password
+```
+
+Then:
+
+```bash
+npm run db:new -- <name>   # create supabase/migrations/<timestamp>_<name>.sql
+npm run db:status          # local vs. applied migrations
+npm run db:push            # apply pending migrations
+```
+
+`db:push` never loads seed data.
+
+### Local database (Docker)
+
+```bash
+npm run db:start   # start a local Supabase stack; prints its URL and keys
+npm run db:reset   # recreate the schema from migrations and load supabase/seed.sql
+npm run db:stop
+```
+
+To point the app at it, put the printed API URL and publishable key in `.env.local`. Seed users: `alice@example.test`, `bob@example.test`, `carol@example.test`, password `password123`. They have a direct chat (Alice and Bob) and a group "Team".
+
+### Checks
+
+`supabase/checks/rls_membership_check.sql` proves that non-members can't read or post in a conversation. Paste it into the SQL Editor; it rolls back and leaves no data.
