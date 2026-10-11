@@ -13,6 +13,16 @@ IP Messenger is a chat app for direct and group conversations. This guide covers
 - **On a computer:** the sidebar on the left has the navigation (**Chats, Contacts, Profile, Settings**), your conversations, and your name with **Sign out** at the bottom. The open chat fills the rest of the window.
 - **On a phone:** you see one screen at a time, with tabs at the bottom. Inside a chat the tabs are hidden. Use **←** to go back to your chats.
 
+## Installing the app
+
+IP Messenger can be installed like a regular app, with its own icon and window:
+
+- **Android (Chrome):** open the menu **⋮** and choose **Install app** (or **Add to Home screen**).
+- **iPhone / iPad (Safari):** tap **Share** and choose **Add to Home Screen**.
+- **Computer (Chrome, Edge):** click the install icon at the right end of the address bar.
+
+The installed app is the same as the website and updates by itself. Without a connection it shows a "You're offline" page and reloads once you're back online.
+
 ## Starting a conversation
 
 1. Go to **Contacts**. Everyone with an account is listed; type a name and press **Search** to narrow the list.

@@ -7,6 +7,7 @@ A modern real-time messenger inspired by the classic LAN tool IP Messenger, buil
 - Live messages, online presence with "last seen", unread counts
 - Light, dark or device theme, saved per user
 - Responsive: sidebar on desktop, tab bar on phones
+- Installable as an app (PWA) on phones and desktops, with an offline page
 
 How to use the app: **[docs/user-guide.md](docs/user-guide.md)**.
 
@@ -160,6 +161,7 @@ lib/
 supabase/
   migrations/  seed.sql  checks/  config.toml
 e2e/                 Playwright tests
+public/              PWA files: icons, service worker (sw.js), offline page
 docs/                user guide, deployment, observability, network information
 proxy.ts             refreshes the auth session on every request
 instrumentation.ts   server error logging

@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { PresenceProvider } from "@/components/presence/presence-provider";
+import { ServiceWorker } from "@/components/service-worker";
 import { ThemeSync } from "@/components/theme-sync";
 import { getUserSettings } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,16 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "IP Messenger",
   description: "A modern messenger inspired by IP Messenger",
+  // Installed app (PWA): full-screen on iOS home screens, with the app's name under the icon.
+  appleWebApp: { capable: true, title: "IP Msg", statusBarStyle: "default" },
+};
+
+// Browser / installed-app title bar colour, matching the page background.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default async function RootLayout({
@@ -31,6 +42,7 @@ export default async function RootLayout({
       </head>
       <body className="min-h-screen antialiased">
         <ThemeSync theme={theme} />
+        <ServiceWorker />
         {userId ? <PresenceProvider userId={userId}>{children}</PresenceProvider> : children}
       </body>
     </html>
