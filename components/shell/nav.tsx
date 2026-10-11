@@ -6,9 +6,11 @@ import { usePathname } from "next/navigation";
 const ITEMS = [
   { href: "/chats", label: "Chats", match: ["/chats", "/chat/"] },
   { href: "/contacts", label: "Contacts", match: ["/contacts", "/groups"] },
+  // MSG-41. On desktop it's the 🔍 button in the sidebar header instead (no room in this row).
+  { href: "/search", label: "Search", match: ["/search"], mobileOnly: true },
   { href: "/profile", label: "Profile", match: ["/profile", "/network"] },
   { href: "/settings", label: "Settings", match: ["/settings"] },
-] as const;
+] as const satisfies readonly { href: string; label: string; match: readonly string[]; mobileOnly?: boolean }[];
 
 function useActive() {
   const pathname = usePathname();
@@ -20,7 +22,7 @@ export function SidebarNav() {
   const isActive = useActive();
   return (
     <nav aria-label="Main" className="flex gap-1 px-3 pb-3">
-      {ITEMS.map((item) => (
+      {ITEMS.filter((item) => !("mobileOnly" in item)).map((item) => (
         <Link
           key={item.href}
           href={item.href}
@@ -42,7 +44,7 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Main"
-      className="grid shrink-0 grid-cols-4 border-t border-neutral-200 bg-background pb-[env(safe-area-inset-bottom)] md:hidden dark:border-neutral-800"
+      className="grid shrink-0 grid-cols-5 border-t border-neutral-200 bg-background pb-[env(safe-area-inset-bottom)] md:hidden dark:border-neutral-800"
     >
       {ITEMS.map((item) => (
         <Link

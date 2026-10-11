@@ -32,12 +32,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Link href="/chats" className="text-lg font-bold">
             IP Messenger
           </Link>
-          <Link
-            href="/contacts"
-            className="rounded-md bg-neutral-900 px-2.5 py-1 text-sm text-white dark:bg-neutral-100 dark:text-neutral-900"
-          >
-            New chat
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              href="/search"
+              aria-label="Search messages"
+              title="Search messages"
+              className="rounded-md px-2 py-1 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-900"
+            >
+              🔍
+            </Link>
+            <Link
+              href="/contacts"
+              className="rounded-md bg-neutral-900 px-2.5 py-1 text-sm text-white dark:bg-neutral-100 dark:text-neutral-900"
+            >
+              New chat
+            </Link>
+          </div>
         </div>
         <SidebarNav />
         <div className="min-h-0 flex-1 overflow-y-auto border-t border-neutral-200 dark:border-neutral-800">

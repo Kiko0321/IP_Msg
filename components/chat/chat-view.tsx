@@ -21,6 +21,7 @@ export function ChatView({
   currentUserId,
   isGroup,
   hasOlder: initialHasOlder,
+  highlightId,
 }: {
   conversationId: string;
   initialMessages: ChatMessage[];
@@ -29,6 +30,8 @@ export function ChatView({
   isGroup: boolean;
   /** The server sent a full page of history, so there may be older messages (MSG-38). */
   hasOlder: boolean;
+  /** MSG-41: a message opened from search, to scroll to and highlight. */
+  highlightId?: string;
 }) {
   const [local, setLocal] = useState<DisplayMessage[]>([]);
   const [older, setOlder] = useState<ChatMessage[]>([]);
@@ -210,6 +213,7 @@ export function ChatView({
         hasOlder={hasOlder}
         loadingOlder={loadingOlder}
         onLoadOlder={loadOlder}
+        highlightId={highlightId}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />

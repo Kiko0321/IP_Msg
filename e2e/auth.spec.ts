@@ -10,7 +10,7 @@ test("visitors see the landing page", async ({ page }) => {
 });
 
 test("every signed-in page sends visitors to sign in", async ({ page }) => {
-  const pages = ["/chats", "/contacts", "/groups/new", "/profile", "/settings", "/network", "/chat/00000000-0000-4000-8000-000000000000"];
+  const pages = ["/chats", "/contacts", "/groups/new", "/search", "/profile", "/settings", "/network", "/chat/00000000-0000-4000-8000-000000000000"];
   for (const path of pages) {
     await page.goto(path);
     await expect(page, path).toHaveURL(/\/sign-in$/);
