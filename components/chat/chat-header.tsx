@@ -5,13 +5,16 @@ export function ChatHeader({
   title,
   subtitle,
   avatarUrl,
+  actions,
 }: {
   title: string;
   subtitle?: React.ReactNode;
   avatarUrl?: string | null;
+  /** Shown at the right, e.g. the MSG-43 block/report menu. */
+  actions?: React.ReactNode;
 }) {
   return (
-    <header className="flex items-center gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
+    <header className="relative flex items-center gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
       <Link href="/chats" aria-label="Back to chats" className="rounded-md px-2 py-1 text-lg text-neutral-500 hover:bg-neutral-100 md:hidden dark:hover:bg-neutral-900">
         ←
       </Link>
@@ -20,6 +23,7 @@ export function ChatHeader({
         <h1 className="truncate font-semibold">{title}</h1>
         {subtitle && <div className="truncate text-xs text-neutral-500">{subtitle}</div>}
       </div>
+      {actions}
     </header>
   );
 }

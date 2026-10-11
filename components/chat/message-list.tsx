@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ChatMember, DisplayMessage } from "@/lib/chat/types";
 import { MessageActions, MessageEditor } from "./message-actions";
 import { MessageAttachment } from "./message-attachment";
+import { ReportForm } from "@/components/safety/report-form";
 
 // Client component: times render in the viewer's time zone, and MSG-18 adds live updates here.
 export function MessageList({
@@ -36,6 +37,7 @@ export function MessageList({
   receipt?: { messageId: string; label: string };
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [reportingId, setReportingId] = useState<string | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
   const endRef = useRef<HTMLLIElement>(null);
   // Scroll height before older messages were added on top, to keep the same messages in view.
@@ -108,7 +110,7 @@ export function MessageList({
           <li
             key={message.id}
             data-message-id={message.id}
-            className={`flex flex-col ${message.id === highlightId ? "rounded-xl bg-yellow-100/70 py-1 dark:bg-yellow-900/40" : ""}`}
+            className={`group flex flex-col ${message.id === highlightId ? "rounded-xl bg-yellow-100/70 py-1 dark:bg-yellow-900/40" : ""}`}
           >
             {newDay && (
               <p className="my-3 text-center text-xs text-neutral-500" suppressHydrationWarning>
@@ -164,6 +166,26 @@ export function MessageList({
             </div>
             {receipt?.messageId === message.id && (
               <p className="self-end px-1 text-[10px] text-neutral-500">{receipt.label}</p>
+            )}
+            {/* MSG-43: report someone else's message. */}
+            {!mine && onEdit && reportingId !== message.id && (
+              <button
+                type="button"
+                onClick={() => setReportingId(message.id)}
+                className="self-start px-1 text-[10px] text-neutral-400 opacity-0 group-hover:opacity-100 hover:text-red-600 hover:underline focus:opacity-100 [@media(hover:none)]:opacity-100"
+              >
+                Report
+              </button>
+            )}
+            {reportingId === message.id && (
+              <div className="max-w-sm self-start rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+                <ReportForm
+                  userId={message.sender_id}
+                  messageId={message.id}
+                  subject="this message"
+                  onDone={() => setReportingId(null)}
+                />
+              </div>
             )}
             {mine && !message.status && onEdit && onDelete && editingId !== message.id && (
               <MessageActions onEdit={() => setEditingId(message.id)} onDelete={() => onDelete(message)} />

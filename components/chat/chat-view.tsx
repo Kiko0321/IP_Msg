@@ -25,6 +25,7 @@ export function ChatView({
   hasOlder: initialHasOlder,
   highlightId,
   readAt,
+  blockNotice,
 }: {
   conversationId: string;
   initialMessages: ChatMessage[];
@@ -37,6 +38,8 @@ export function ChatView({
   highlightId?: string;
   /** MSG-42: each member's last_read_at, for "Seen" receipts. */
   readAt: Record<string, string | null>;
+  /** MSG-43: shown instead of the message box when a block stops sending. */
+  blockNotice?: string;
 }) {
   const [local, setLocal] = useState<DisplayMessage[]>([]);
   const [older, setOlder] = useState<ChatMessage[]>([]);
@@ -290,7 +293,13 @@ export function ChatView({
       <p className="h-5 px-5 text-xs text-neutral-500" aria-live="polite">
         {typingText}
       </p>
-      <MessageInput onSend={handleSend} onTyping={handleTyping} />
+      {blockNotice ? (
+        <p className="border-t border-neutral-200 px-4 py-4 text-center text-sm text-neutral-500 dark:border-neutral-800">
+          {blockNotice}
+        </p>
+      ) : (
+        <MessageInput onSend={handleSend} onTyping={handleTyping} />
+      )}
       <ReadMarker
         conversationId={conversationId}
         latestMessageAt={messages.at(-1)?.created_at}

@@ -1,6 +1,7 @@
 -- MSG-12 check: members can read and send; non-members cannot read, send or join.
 -- MSG-37: a creator can build a group (conversation, self as owner, members); only the owner adds people.
 -- MSG-40: only the sender can edit or delete a message.
+-- MSG-43: blocks are private; a block either way stops a direct chat; reports are the reporter's own.
 -- MSG-39: only members can upload or see a conversation's attachments; messages can't point elsewhere.
 --
 -- Run it either way:
@@ -19,6 +20,7 @@ declare
   chat_id constant uuid := '00000000-0000-4000-8000-0000000000c3';
   group_id constant uuid := '00000000-0000-4000-8000-0000000000d4';
   stranger_id constant uuid := '00000000-0000-4000-8000-0000000000e5';
+  direct_id uuid;
   n int;
 begin
   begin
@@ -137,6 +139,46 @@ begin
     exception when insufficient_privilege then null;
     end;
 
+    -- 5) MSG-43: blocking and reporting. member_id and outsider_id get a direct chat first.
+    perform set_config('request.jwt.claims', json_build_object('sub', member_id, 'role', 'authenticated')::text, true);
+    select public.start_direct_conversation(outsider_id) into direct_id;
+    insert into public.blocks (blocker_id, blocked_id) values (member_id, outsider_id);
+
+    perform set_config('request.jwt.claims', json_build_object('sub', outsider_id, 'role', 'authenticated')::text, true);
+    select count(*) into n from public.blocks;
+    if n <> 0 then raise exception 'FAIL: a blocked person can see the block'; end if;
+    begin
+      insert into public.messages (conversation_id, sender_id, content) values (direct_id, outsider_id, 'still here?');
+      raise exception 'FAIL: a blocked person could message the blocker';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+      perform public.start_direct_conversation(member_id);
+      raise exception 'FAIL: a blocked person could start a chat with the blocker';
+    exception when insufficient_privilege then null;
+    end;
+    -- Groups are unaffected: the blocked person can still write in the group they share.
+    insert into public.messages (conversation_id, sender_id, content) values (group_id, outsider_id, 'group is fine');
+
+    perform set_config('request.jwt.claims', json_build_object('sub', member_id, 'role', 'authenticated')::text, true);
+    begin
+      insert into public.messages (conversation_id, sender_id, content) values (direct_id, member_id, 'one-way?');
+      raise exception 'FAIL: the blocker could still message the person they blocked';
+    exception when insufficient_privilege then null;
+    end;
+    delete from public.blocks where blocker_id = member_id and blocked_id = outsider_id;
+    insert into public.messages (conversation_id, sender_id, content) values (direct_id, member_id, 'unblocked');
+
+    insert into public.reports (reporter_id, reported_user_id, reason) values (member_id, outsider_id, 'spam');
+    begin
+      insert into public.reports (reporter_id, reported_user_id, reason) values (stranger_id, outsider_id, 'spam');
+      raise exception 'FAIL: a report could be filed in someone else''s name';
+    exception when insufficient_privilege then null;
+    end;
+    perform set_config('request.jwt.claims', json_build_object('sub', outsider_id, 'role', 'authenticated')::text, true);
+    select count(*) into n from public.reports;
+    if n <> 0 then raise exception 'FAIL: the reported person can see % report(s)', n; end if;
+
     -- Everything passed: undo all of the above.
     raise exception using errcode = 'P0001', message = 'rls-check-rollback';
   exception
@@ -148,4 +190,4 @@ begin
 end;
 $check$;
 
-select 'PASS: members can read/send; non-members cannot read, send or join; only senders edit/delete; groups: creator builds, only owner adds; attachments: members only' as result;
+select 'PASS: members can read/send; non-members cannot read, send or join; only senders edit/delete; groups: creator builds, only owner adds; attachments: members only; blocks and reports private, blocks stop direct chats' as result;
