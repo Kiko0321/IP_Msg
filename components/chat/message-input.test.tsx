@@ -38,3 +38,14 @@ describe("MessageInput attachments", () => {
     expect(screen.queryByText("setup.exe")).not.toBeInTheDocument();
   });
 });
+
+describe("MessageInput typing (MSG-42)", () => {
+  it("reports typing, but not for blank input", async () => {
+    const onTyping = vi.fn();
+    render(<MessageInput onSend={vi.fn()} onTyping={onTyping} />);
+    await userEvent.type(screen.getByRole("textbox", { name: "Message" }), "  ");
+    expect(onTyping).not.toHaveBeenCalled();
+    await userEvent.type(screen.getByRole("textbox", { name: "Message" }), "hi");
+    expect(onTyping).toHaveBeenCalled();
+  });
+});
