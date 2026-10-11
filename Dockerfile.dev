@@ -6,6 +6,8 @@ WORKDIR /app
 # COPY package.json package-lock.json ./
 # RUN npm ci
 
+# The desktop app's Electron binary (MSG-34) isn't needed in a container.
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
 COPY package.json package-lock.json ./
 RUN npm ci \
     --fetch-retries=5 \

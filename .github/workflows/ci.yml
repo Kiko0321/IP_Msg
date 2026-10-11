@@ -17,6 +17,10 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # The desktop app's Electron binary (MSG-34) is only needed by desktop.yml.
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
 jobs:
   verify:
     runs-on: ubuntu-latest

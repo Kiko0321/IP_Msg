@@ -8,6 +8,7 @@ A modern real-time messenger inspired by the classic LAN tool IP Messenger, buil
 - Light, dark or device theme, saved per user
 - Responsive: sidebar on desktop, tab bar on phones
 - Installable as an app (PWA) on phones and desktops, with an offline page
+- Desktop app with installers for Windows and Linux ([docs/desktop.md](docs/desktop.md))
 
 How to use the app: **[docs/user-guide.md](docs/user-guide.md)**.
 
@@ -74,7 +75,7 @@ A few settings live in the Dashboard:
 1. **Authentication → Sign In / Providers → Email:** enabled. Decide whether **Confirm email** is on; the app handles both.
 2. **Authentication → URL Configuration:**
    - **Site URL:** `http://localhost:3000` (your production URL later)
-   - **Redirect URLs:** `http://localhost:3000/auth/confirm**` (plus `https://<prod-domain>/auth/confirm**`). The `**` lets the password reset link carry `?next=/reset-password`.
+   - **Redirect URLs:** `http://localhost:3000/auth/confirm**` (plus `https://<prod-domain>/auth/confirm**`, and `http://127.0.0.1:47321/auth/confirm**` for the [desktop app](docs/desktop.md)). The `**` lets the password reset link carry `?next=/reset-password`.
 3. **Realtime:** public channels must be allowed (the default), for online presence.
 
 ## Database and migrations
@@ -163,6 +164,7 @@ supabase/
   migrations/  seed.sql  checks/  config.toml
 e2e/                 Playwright tests
 public/              PWA files: icons, service worker (sw.js), offline page
+desktop/             Electron desktop app and installer config
 docs/                user guide, deployment, observability, network information
 proxy.ts             refreshes the auth session on every request
 instrumentation.ts   server error logging
@@ -174,6 +176,7 @@ instrumentation.ts   server error logging
 | --- | --- |
 | [docs/user-guide.md](docs/user-guide.md) | Using the app |
 | [docs/deployment.md](docs/deployment.md) | Production Docker image or Vercel, env vars, Supabase Auth URLs, release flow |
+| [docs/desktop.md](docs/desktop.md) | Desktop app: installers for Windows and Linux, building them, how it works |
 | [docs/observability.md](docs/observability.md) | Structured logs, tracing an "Error ID", what is never logged |
 | [docs/network-information.md](docs/network-information.md) | What "IP" means in this app, who sees it, limitations |
 | [e2e/README.md](e2e/README.md) | End-to-end test setup |

@@ -13,6 +13,8 @@
 FROM node:24-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+# The desktop app's Electron binary (MSG-34) isn't needed to build the server.
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
 RUN npm ci
 
 FROM node:24-alpine AS build
