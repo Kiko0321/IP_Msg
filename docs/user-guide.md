@@ -54,9 +54,11 @@ Under **Profile** you can:
 
 Under **Settings**:
 - **Theme:** Light, Dark, or **Match my device**, which follows your computer or phone's setting.
-- **Notifications:** your preferences for new-message notifications and sound.
+- **Notifications:**
+  - **Notify me about new messages** shows a system notification when a message arrives in a chat you aren't looking at. Click it to open the chat. Each device has to allow notifications once: choose **Allow notifications** under the setting (or allow them when your browser asks). If they're blocked, allow them in your browser's site settings.
+  - **Play a sound for new messages** plays a short chime. Browsers only play sound after you've clicked somewhere in the app once.
 
-Settings are saved to your account, so they follow you to every device.
+Settings are saved to your account, so they follow you to every device. Notifications work while the app is open, in a tab or window, even in the background; the desktop app shows them as normal system notifications.
 
 ## Privacy
 

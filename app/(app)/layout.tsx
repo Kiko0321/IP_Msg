@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { signOut } from "@/app/(auth)/actions";
 import { Avatar } from "@/components/avatar";
 import { ConversationList } from "@/components/chat/conversation-list";
+import { MessageNotifier } from "@/components/notifications/message-notifier";
 import { MobileNav, SidebarNav } from "@/components/shell/nav";
+import { getUserSettings } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
 
 // MSG-20: app shell for signed-in pages.
@@ -15,15 +17,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!data?.claims) redirect("/sign-in");
   const me = data.claims.sub;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name, status_message, avatar_url")
-    .eq("id", me)
-    .maybeSingle();
+  const [{ data: profile }, settings] = await Promise.all([
+    supabase.from("profiles").select("display_name, status_message, avatar_url").eq("id", me).maybeSingle(),
+    getUserSettings(supabase, me),
+  ]);
   const name = profile?.display_name ?? data.claims.email ?? "You";
 
   return (
     <div className="flex h-dvh overflow-hidden">
+      {/* MSG-36: new-message notifications and sound, live sidebar updates. */}
+      <MessageNotifier userId={me} notifyNewMessages={settings.notifyNewMessages} notifySound={settings.notifySound} />
       <aside className="hidden w-80 shrink-0 flex-col border-r border-neutral-200 md:flex lg:w-96 dark:border-neutral-800">
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <Link href="/chats" className="text-lg font-bold">

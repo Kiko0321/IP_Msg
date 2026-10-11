@@ -1,11 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ChatMember, DisplayMessage } from "@/lib/chat/types";
 import { MESSAGE_MAX } from "@/lib/validation/message";
 import { Avatar } from "./avatar";
 import { MessageInput } from "./chat/message-input";
 import { MessageList } from "./chat/message-list";
+import { NotificationPermission } from "./notifications/notification-permission";
 
 describe("Avatar", () => {
   it("shows initials when there is no picture", () => {
@@ -119,5 +120,32 @@ describe("MessageList (MSG-16)", () => {
   it("shows an empty state", () => {
     render(<MessageList currentUserId={me} members={members} showSenderNames={false} messages={[]} />);
     expect(screen.getByText("No messages yet. Say hello!")).toBeInTheDocument();
+  });
+});
+
+describe("NotificationPermission (MSG-36)", () => {
+  function stubNotification(permission: NotificationPermission, answer: NotificationPermission = permission) {
+    // Like a browser: answering the prompt updates Notification.permission.
+    const fake = Object.assign(function Notification() {}, { permission, requestPermission: vi.fn() });
+    fake.requestPermission.mockImplementation(async () => (fake.permission = answer));
+    vi.stubGlobal("Notification", fake);
+    return fake.requestPermission;
+  }
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("offers to allow notifications and shows the answer", async () => {
+    const requestPermission = stubNotification("default", "granted");
+    render(<NotificationPermission />);
+    await userEvent.click(await screen.findByRole("button", { name: "Allow notifications" }));
+    expect(requestPermission).toHaveBeenCalled();
+    expect(await screen.findByText(/allowed on this device/)).toBeInTheDocument();
+  });
+
+  it("explains how to unblock them", async () => {
+    stubNotification("denied");
+    render(<NotificationPermission />);
+    expect(await screen.findByText(/blocked for this site/)).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });
