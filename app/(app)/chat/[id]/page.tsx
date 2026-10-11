@@ -21,8 +21,19 @@ type ConversationRow = {
   }[];
 };
 
-export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
+const NOTICES: Record<string, string> = {
+  "members-failed": "The group was created, but some people couldn't be added.",
+};
+
+export default async function ChatPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ notice?: string }>;
+}) {
   const { id } = await params;
+  const { notice } = await searchParams;
   if (!UUID_PATTERN.test(id)) notFound();
 
   const supabase = await createClient();
@@ -72,6 +83,11 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   return (
     <main className="mx-auto flex h-full w-full max-w-3xl flex-col">
       <ChatHeader title={title} subtitle={subtitle} avatarUrl={isGroup ? null : others[0]?.avatar_url} />
+      {notice && NOTICES[notice] && (
+        <p role="alert" className="mx-4 mt-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+          {NOTICES[notice]}
+        </p>
+      )}
       <ChatView
         conversationId={conversation.id}
         initialMessages={messages}

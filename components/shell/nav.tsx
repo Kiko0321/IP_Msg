@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const ITEMS = [
   { href: "/chats", label: "Chats", match: ["/chats", "/chat/"] },
-  { href: "/contacts", label: "Contacts", match: ["/contacts"] },
+  { href: "/contacts", label: "Contacts", match: ["/contacts", "/groups"] },
   { href: "/profile", label: "Profile", match: ["/profile", "/network"] },
   { href: "/settings", label: "Settings", match: ["/settings"] },
 ] as const;

@@ -1,4 +1,5 @@
 -- MSG-12 check: members can read and send; non-members cannot read, send or join.
+-- MSG-37: a creator can build a group (conversation, self as owner, members); only the owner adds people.
 --
 -- Run it either way:
 --   npx supabase db query --linked -f supabase/checks/rls_membership_check.sql
@@ -14,13 +15,16 @@ declare
   member_id constant uuid := '00000000-0000-4000-8000-0000000000a1';
   outsider_id constant uuid := '00000000-0000-4000-8000-0000000000b2';
   chat_id constant uuid := '00000000-0000-4000-8000-0000000000c3';
+  group_id constant uuid := '00000000-0000-4000-8000-0000000000d4';
+  stranger_id constant uuid := '00000000-0000-4000-8000-0000000000e5';
   n int;
 begin
   begin
     -- Setup, as the database owner. Profiles come from the sign-up trigger (MSG-07).
     insert into auth.users (id, email, raw_user_meta_data, aud, role) values
       (member_id, 'rls-member@example.test', '{"display_name":"Member"}', 'authenticated', 'authenticated'),
-      (outsider_id, 'rls-outsider@example.test', '{"display_name":"Outsider"}', 'authenticated', 'authenticated');
+      (outsider_id, 'rls-outsider@example.test', '{"display_name":"Outsider"}', 'authenticated', 'authenticated'),
+      (stranger_id, 'rls-stranger@example.test', '{"display_name":"Stranger"}', 'authenticated', 'authenticated');
     insert into public.conversations (id, kind, created_by) values (chat_id, 'direct', member_id);
     insert into public.conversation_members (conversation_id, user_id, role) values (chat_id, member_id, 'owner');
     insert into public.messages (conversation_id, sender_id, content) values (chat_id, member_id, 'secret');
@@ -64,6 +68,31 @@ begin
     exception when insufficient_privilege then null;
     end;
 
+    -- 3) MSG-37: creating a group the way the app does: the conversation, then the creator as
+    --    owner, then the others. Afterwards members can read it, but only the owner can add people.
+    perform set_config('request.jwt.claims', json_build_object('sub', member_id, 'role', 'authenticated')::text, true);
+    insert into public.conversations (id, kind, title, created_by) values (group_id, 'group', 'Check group', member_id);
+    insert into public.conversation_members (conversation_id, user_id, role) values (group_id, member_id, 'owner');
+    insert into public.conversation_members (conversation_id, user_id, role) values (group_id, outsider_id, 'member');
+
+    perform set_config('request.jwt.claims', json_build_object('sub', outsider_id, 'role', 'authenticated')::text, true);
+    select count(*) into n from public.conversations where id = group_id;
+    if n <> 1 then raise exception 'FAIL: an added group member can''t see the group'; end if;
+    insert into public.messages (conversation_id, sender_id, content) values (group_id, outsider_id, 'hi all');
+
+    begin
+      insert into public.conversation_members (conversation_id, user_id) values (group_id, stranger_id);
+      raise exception 'FAIL: a group member who isn''t the owner could add people';
+    exception when insufficient_privilege then null;
+    end;
+
+    perform set_config('request.jwt.claims', json_build_object('sub', stranger_id, 'role', 'authenticated')::text, true);
+    begin
+      insert into public.conversation_members (conversation_id, user_id, role) values (group_id, stranger_id, 'owner');
+      raise exception 'FAIL: an outsider could make themselves owner of someone else''s group';
+    exception when insufficient_privilege then null;
+    end;
+
     -- Everything passed: undo all of the above.
     raise exception using errcode = 'P0001', message = 'rls-check-rollback';
   exception
@@ -75,4 +104,4 @@ begin
 end;
 $check$;
 
-select 'PASS: members can read/send; non-members cannot read, send or join' as result;
+select 'PASS: members can read/send; non-members cannot read, send or join; groups: creator builds, only owner adds' as result;

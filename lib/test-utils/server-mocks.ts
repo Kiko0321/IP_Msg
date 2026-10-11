@@ -37,21 +37,24 @@ type Result = { data?: unknown; error?: { message: string } | null };
 
 /**
  * A chainable fake of the Supabase client. Every query-builder call returns the same builder, and
- * awaiting it (or calling single/maybeSingle) resolves to `queryResult`. Auth and storage calls
- * are plain vi.fn()s that tests can override.
+ * awaiting it (or calling single/maybeSingle) resolves to the next of `results` (one per query, in
+ * order), then to `queryResult`. Auth and storage calls are plain vi.fn()s that tests can override.
  */
 export function fakeSupabase({
   userId = "11111111-1111-4111-8111-111111111111",
   signedIn = true,
   queryResult = { data: null, error: null } as Result,
+  results = [] as Result[],
 } = {}) {
+  const queue = [...results];
+  const next = async () => queue.shift() ?? queryResult;
   const query: Record<string, unknown> = {};
-  for (const method of ["select", "insert", "update", "upsert", "delete", "eq", "in", "order", "limit"]) {
+  for (const method of ["select", "insert", "update", "upsert", "delete", "eq", "neq", "in", "order", "limit"]) {
     query[method] = vi.fn(() => query);
   }
-  query.single = vi.fn(async () => queryResult);
-  query.maybeSingle = vi.fn(async () => queryResult);
-  query.then = (resolve: (value: Result) => unknown) => Promise.resolve(queryResult).then(resolve);
+  query.single = vi.fn(next);
+  query.maybeSingle = vi.fn(next);
+  query.then = (resolve: (value: Result) => unknown) => next().then(resolve);
 
   const bucket = {
     list: vi.fn(async () => ({ data: [] as { name: string }[], error: null })),
