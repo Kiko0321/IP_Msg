@@ -81,3 +81,16 @@ test("signed-out visitors are sent to sign in", async ({ page }) => {
   await page.goto("/chats");
   await expect(page).toHaveURL(/\/sign-in$/);
 });
+
+test("sign-in links to the password reset form (MSG-31)", async ({ page }) => {
+  await page.goto("/sign-in");
+  await page.getByRole("link", { name: "Forgot password?" }).click();
+  await expect(page).toHaveURL(/\/forgot-password$/);
+  await expect(page.getByRole("button", { name: "Send reset link" })).toBeVisible();
+
+  // Without a valid reset link there is no session, so the new-password page sends you back.
+  await page.goto("/reset-password");
+  await expect(page).toHaveURL(/\/forgot-password\?notice=link-expired$/);
+  // Filtered by text: Next's route announcer is also role="alert".
+  await expect(page.getByRole("alert").filter({ hasText: "invalid or has expired" })).toBeVisible();
+});
