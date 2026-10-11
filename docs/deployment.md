@@ -70,6 +70,9 @@ Without this, confirmation and password reset emails link to the wrong host.
 | Sign up or sign in | You land on the home page |
 | Chat between two accounts | Messages appear live; unread badges update |
 | Server logs | One JSON line per event; a startup line `"msg":"server started"` |
+| `https://<your-domain>/manifest.webmanifest` and `/sw.js` | Both load; the browser offers to install the app |
+
+Installing the app (PWA) needs HTTPS; `localhost` is the only exception.
 
 ## Release flow
 

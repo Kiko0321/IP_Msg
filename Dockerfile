@@ -34,9 +34,10 @@ ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0
 
 # The standalone output contains server.js and only the node_modules it needs; static assets
-# are copied next to it so server.js serves them (there is no public/ folder).
+# and public/ (PWA icons, service worker, offline page) are copied next to it so server.js serves them.
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
+COPY --from=build --chown=node:node /app/public ./public
 
 USER node
 EXPOSE 3000

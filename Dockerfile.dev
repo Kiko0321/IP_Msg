@@ -3,8 +3,13 @@ FROM node:24-alpine
 
 WORKDIR /app
 
+# COPY package.json package-lock.json ./
+# RUN npm ci
+
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci \
+    --fetch-retries=5 \
+    --fetch-timeout=300000
 
 COPY . .
 
