@@ -58,9 +58,9 @@ CI builds this image and smoke-tests it on every PR (`.github/workflows/ci.yml`,
 In the Supabase Dashboard, go to **Authentication → URL Configuration**:
 
 - **Site URL:** `https://<your-domain>`
-- **Redirect URLs:** add `https://<your-domain>/auth/confirm`. Keep `http://localhost:3000/auth/confirm` for local development.
+- **Redirect URLs:** add `https://<your-domain>/auth/confirm**`. Keep `http://localhost:3000/auth/confirm**` for local development. The `**` also allows the password reset link's `?next=/reset-password`.
 
-Without this, confirmation emails link to the wrong host.
+Without this, confirmation and password reset emails link to the wrong host.
 
 ## 5. Verify
 

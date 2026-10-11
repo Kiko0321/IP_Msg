@@ -7,6 +7,7 @@ IP Messenger is a chat app for direct and group conversations. This guide covers
 1. **Sign up.** Open the app and choose **Sign up**. Enter a display name (what others see), your email and a password of at least 8 characters.
 2. **Confirm your email,** if the app asks you to. Click the link in the email and you're signed in.
 3. **Sign in** later with your email and password.
+4. **Forgot your password?** On the sign-in page choose **Forgot password?** and enter your email. Open the link in the email (in the same browser), choose a new password, and you're signed in. The link works once and expires after an hour.
 
 ## Finding your way around
 

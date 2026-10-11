@@ -73,7 +73,7 @@ A few settings live in the Dashboard:
 1. **Authentication → Sign In / Providers → Email:** enabled. Decide whether **Confirm email** is on; the app handles both.
 2. **Authentication → URL Configuration:**
    - **Site URL:** `http://localhost:3000` (your production URL later)
-   - **Redirect URLs:** `http://localhost:3000/auth/confirm` (plus `https://<prod-domain>/auth/confirm`)
+   - **Redirect URLs:** `http://localhost:3000/auth/confirm**` (plus `https://<prod-domain>/auth/confirm**`). The `**` lets the password reset link carry `?next=/reset-password`.
 3. **Realtime:** public channels must be allowed (the default), for online presence.
 
 ## Database and migrations
@@ -144,10 +144,11 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs lint, build, type
 
 ```
 app/
-  (auth)/            sign-in, sign-up (server actions)
+  (auth)/            sign-in, sign-up, forgot-password (server actions)
   (app)/             signed-in pages sharing the sidebar / tab-bar layout
     chats/  chat/[id]/  contacts/  profile/  settings/  network/
-  auth/confirm/      email confirmation callback
+  auth/confirm/      email confirmation and password reset callback
+  reset-password/    choose a new password after the reset link
   api/health/        Supabase connectivity check
 components/
   chat/              chat view, message list/input, conversation list
@@ -201,6 +202,6 @@ Work is tracked as tickets (`MSG-NN`) on the GitHub project board, grouped into 
 | "NEXT_PUBLIC_SUPABASE_URL must be the project URL without a path" | Remove `/rest/v1/` (or any path) from the URL |
 | `npm install` or `npx` fails with `ETIMEDOUT` while `curl` works | Node gives up on slow IPv4 connections when there's no IPv6. Run `export NODE_OPTIONS="--no-network-family-autoselection --dns-result-order=ipv4first"` and retry |
 | Supabase SQL Editor says "Backend error! Retry your query" | Use the CLI instead: `npx supabase db query --linked -f <file.sql>` |
-| Confirmation email link goes to the wrong site | Set Site URL and Redirect URLs in Supabase (see [setup](#supabase-project-setup)) |
+| Confirmation or reset email link goes to the wrong site | Set Site URL and Redirect URLs in Supabase (see [setup](#supabase-project-setup)) |
 | Messages don't appear live | Check that `npm run db:status` shows all migrations applied; the Realtime migration is `…_enable_messages_realtime` |
 | Everyone shows as offline | Supabase → Realtime settings: allow public channels |

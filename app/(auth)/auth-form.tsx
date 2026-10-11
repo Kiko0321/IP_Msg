@@ -6,6 +6,9 @@ import { signIn, signUp, type AuthState } from "./actions";
 
 type Mode = "sign-in" | "sign-up";
 
+export const buttonClass =
+  "rounded-md bg-neutral-900 px-3 py-2 font-medium text-white disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900";
+
 const COPY = {
   "sign-in": {
     title: "Sign in",
@@ -25,7 +28,7 @@ const COPY = {
   },
 } as const;
 
-const inputClass =
+export const inputClass =
   "w-full rounded-md border border-neutral-300 bg-transparent px-3 py-2 outline-none focus:border-neutral-500 dark:border-neutral-700";
 
 export function AuthForm({ mode, notice }: { mode: Mode; notice?: string }) {
@@ -70,6 +73,12 @@ export function AuthForm({ mode, notice }: { mode: Mode; notice?: string }) {
         />
       </label>
 
+      {mode === "sign-in" && (
+        <Link href="/forgot-password" className="-mt-2 self-end text-sm text-neutral-500 underline">
+          Forgot password?
+        </Link>
+      )}
+
       {state.error && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {state.error}
@@ -81,11 +90,7 @@ export function AuthForm({ mode, notice }: { mode: Mode; notice?: string }) {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-neutral-900 px-3 py-2 font-medium text-white disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900"
-      >
+      <button type="submit" disabled={pending} className={buttonClass}>
         {pending ? copy.pending : copy.submit}
       </button>
 
