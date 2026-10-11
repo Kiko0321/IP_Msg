@@ -206,6 +206,7 @@ Work is tracked as tickets (`MSG-NN`) on the GitHub project board, grouped into 
 | Every page shows "Missing NEXT_PUBLIC_SUPABASE_URL…" | Create `.env.local` from `.env.example` and restart the dev server |
 | "NEXT_PUBLIC_SUPABASE_URL must be the project URL without a path" | Remove `/rest/v1/` (or any path) from the URL |
 | `npm install` or `npx` fails with `ETIMEDOUT` while `curl` works | Node gives up on slow IPv4 connections when there's no IPv6. Run `export NODE_OPTIONS="--no-network-family-autoselection --dns-result-order=ipv4first"` and retry |
+| `docker compose up --build` fails at `npm ci` with `ECONNRESET` | The network dropped mid-download. Run the same command again: packages already downloaded are kept in Docker's build cache, so each retry continues where the last one stopped |
 | Supabase SQL Editor says "Backend error! Retry your query" | Use the CLI instead: `npx supabase db query --linked -f <file.sql>` |
 | Confirmation or reset email link goes to the wrong site | Set Site URL and Redirect URLs in Supabase (see [setup](#supabase-project-setup)) |
 | Messages don't appear live | Check that `npm run db:status` shows all migrations applied; the Realtime migration is `…_enable_messages_realtime` |
