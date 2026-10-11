@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { sendMessage } from "@/app/(app)/chat/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
-import type { ChatMember, ChatMessage, DisplayMessage } from "@/lib/chat/types";
+import { ATTACHMENT_BUCKET, attachmentPath } from "@/lib/validation/attachment";
+import { MESSAGE_COLUMNS, type ChatMember, type ChatMessage, type DisplayMessage } from "@/lib/chat/types";
 import { MessageInput } from "./message-input";
 import { MessageList } from "./message-list";
 import { ReadMarker } from "./read-marker";
@@ -50,7 +51,12 @@ export function ChatView({
         if (list.some((m) => m.id === row.id)) return list;
         // Our own message can arrive here before sendMessage returns; the pending
         // placeholder is swapped for it then, so don't add a duplicate now.
-        const pendingOwn = row.sender_id === currentUserId && list.some((m) => m.status === "sending" && m.content === row.content);
+        const pendingOwn = row.sender_id === currentUserId && list.some(
+            (m) =>
+              m.status === "sending" &&
+              m.content === row.content &&
+              (m.attachment_name ?? null) === (row.attachment_name ?? null),
+          );
         return pendingOwn ? list : [...list, row];
       });
 
@@ -59,7 +65,7 @@ export function ChatView({
     async function catchUp() {
       let query = supabase
         .from("messages")
-        .select("id, sender_id, content, created_at, edited_at")
+        .select(MESSAGE_COLUMNS)
         .eq("conversation_id", conversationId)
         .order("created_at")
         .limit(100);
@@ -107,7 +113,7 @@ export function ChatView({
     setLoadingOlder(true);
     const { data, error } = await createClient()
       .from("messages")
-      .select("id, sender_id, content, created_at, edited_at")
+      .select(MESSAGE_COLUMNS)
       .eq("conversation_id", conversationId)
       .lt("created_at", oldest)
       .order("created_at", { ascending: false })
@@ -123,7 +129,7 @@ export function ChatView({
     latestAtRef.current = messages.filter((m) => !m.status).at(-1)?.created_at;
   });
 
-  function handleSend(content: string) {
+  function handleSend(content: string, file?: File) {
     const tempId = `local-${crypto.randomUUID()}`;
     const pending: DisplayMessage = {
       id: tempId,
@@ -132,11 +138,23 @@ export function ChatView({
       created_at: new Date().toISOString(),
       edited_at: null,
       status: "sending",
+      ...(file && { attachment_name: file.name, attachment_type: file.type, attachment_size: file.size, localFile: file }),
     };
     setLocal((list) => [...list, pending]);
 
     startTransition(async () => {
-      const result = await sendMessage(conversationId, content);
+      let attachment;
+      if (file) {
+        // MSG-39: the browser uploads straight to Storage (Server Actions cap bodies at 1 MB);
+        // the bucket's RLS only accepts it in a conversation the user belongs to.
+        const path = attachmentPath(conversationId, file.type);
+        const { error } = await createClient()
+          .storage.from(ATTACHMENT_BUCKET)
+          .upload(path, file, { contentType: file.type, cacheControl: "31536000" });
+        attachment = error ? null : { path, name: file.name, type: file.type, size: file.size };
+      }
+
+      const result = attachment === null ? {} : await sendMessage(conversationId, content, attachment);
       setLocal((list) =>
         list.map((m) => {
           if (m.id !== tempId) return m;

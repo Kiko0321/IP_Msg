@@ -8,3 +8,9 @@ export const messageSchema = z
   .trim()
   .min(1, "Type a message.")
   .max(MESSAGE_MAX, `Messages can be at most ${MESSAGE_MAX} characters.`);
+
+// MSG-39: with an attachment the text is optional (the database allows empty content then).
+export const captionSchema = z
+  .string()
+  .trim()
+  .max(MESSAGE_MAX, `Messages can be at most ${MESSAGE_MAX} characters.`);

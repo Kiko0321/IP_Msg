@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatView } from "@/components/chat/chat-view";
 import { OnlineStatus } from "@/components/presence/online-status";
-import type { ChatMember, ChatMessage } from "@/lib/chat/types";
+import { MESSAGE_COLUMNS, type ChatMember, type ChatMessage } from "@/lib/chat/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Chat · IP Messenger" };
@@ -53,7 +53,7 @@ export default async function ChatPage({
   // Newest HISTORY_LIMIT messages, shown oldest first.
   const { data: messageData } = await supabase
     .from("messages")
-    .select("id, sender_id, content, created_at, edited_at")
+    .select(MESSAGE_COLUMNS)
     .eq("conversation_id", id)
     .order("created_at", { ascending: false })
     .limit(HISTORY_LIMIT);

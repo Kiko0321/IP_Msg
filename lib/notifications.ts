@@ -1,7 +1,12 @@
 // MSG-36: rules for new-message alerts, kept free of browser APIs so they can be unit-tested.
 // The browser side is components/notifications/message-notifier.tsx.
 
-export type IncomingMessage = { conversation_id: string; sender_id: string; content: string };
+export type IncomingMessage = {
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  attachment_name?: string | null;
+};
 
 export type ViewState = {
   /** Current path, e.g. "/chat/<id>". */
@@ -38,6 +43,7 @@ export function notificationText(
   conversation: { kind: "direct" | "group"; title: string | null } | null,
 ) {
   const title = conversation?.kind === "group" ? `${senderName} in ${conversation.title || "a group"}` : senderName;
-  const text = message.content.replace(/\s+/g, " ").trim();
+  // MSG-39: a file sent without text is announced by its name.
+  const text = message.content.replace(/\s+/g, " ").trim() || (message.attachment_name ? `📎 ${message.attachment_name}` : "");
   return { title, body: text.length > PREVIEW_LENGTH ? `${text.slice(0, PREVIEW_LENGTH - 1)}…` : text };
 }
