@@ -2,6 +2,7 @@
 -- MSG-37: a creator can build a group (conversation, self as owner, members); only the owner adds people.
 -- MSG-40: only the sender can edit or delete a message.
 -- MSG-43: blocks are private; a block either way stops a direct chat; reports are the reporter's own.
+-- MSG-44: deleting your account removes you and your messages and hands your groups on.
 -- MSG-39: only members can upload or see a conversation's attachments; messages can't point elsewhere.
 --
 -- Run it either way:
@@ -179,6 +180,25 @@ begin
     select count(*) into n from public.reports;
     if n <> 0 then raise exception 'FAIL: the reported person can see % report(s)', n; end if;
 
+    -- 6) MSG-44 (last: it deletes member_id): delete_my_account removes the user, their profile and
+    --    messages, and makes another member owner of the group they owned.
+    perform set_config('request.jwt.claims', json_build_object('sub', member_id, 'role', 'authenticated')::text, true);
+    perform public.delete_my_account();
+    perform set_config('role', 'postgres', true);
+    if exists (select 1 from auth.users where id = member_id) then raise exception 'FAIL: the account still exists'; end if;
+    if exists (select 1 from public.profiles where id = member_id) then raise exception 'FAIL: the profile still exists'; end if;
+    if exists (select 1 from public.messages where sender_id = member_id) then raise exception 'FAIL: their messages remain'; end if;
+    if not exists (select 1 from public.conversation_members where conversation_id = group_id and user_id = outsider_id and role = 'owner') then
+      raise exception 'FAIL: the group was not handed to another member';
+    end if;
+    perform set_config('role', 'authenticated', true);
+    perform set_config('request.jwt.claims', '{}', true);
+    begin
+      perform public.delete_my_account();
+      raise exception 'FAIL: delete_my_account ran without a signed-in user';
+    exception when invalid_authorization_specification then null;
+    end;
+
     -- Everything passed: undo all of the above.
     raise exception using errcode = 'P0001', message = 'rls-check-rollback';
   exception
@@ -190,4 +210,4 @@ begin
 end;
 $check$;
 
-select 'PASS: members can read/send; non-members cannot read, send or join; only senders edit/delete; groups: creator builds, only owner adds; attachments: members only; blocks and reports private, blocks stop direct chats' as result;
+select 'PASS: members can read/send; non-members cannot read, send or join; only senders edit/delete; groups: creator builds, only owner adds; attachments: members only; blocks and reports private, blocks stop direct chats; account deletion cleans up' as result;

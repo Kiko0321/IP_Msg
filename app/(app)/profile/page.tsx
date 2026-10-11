@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AvatarUpload } from "./avatar-upload";
+import { DeleteAccount } from "./delete-account";
 import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = { title: "Profile · IP Messenger" };
@@ -40,6 +41,8 @@ export default async function ProfilePage() {
           statusMessage: profile?.status_message ?? "",
         }}
       />
+
+      <DeleteAccount />
     </main>
   );
 }

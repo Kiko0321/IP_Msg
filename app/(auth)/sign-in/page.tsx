@@ -5,6 +5,7 @@ export const metadata: Metadata = { title: "Sign in · IP Messenger" };
 
 const NOTICES: Record<string, string> = {
   "confirm-failed": "That confirmation link is invalid or has expired. Sign in, or sign up again.",
+  "account-deleted": "Your account and everything in it have been deleted.",
 };
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
