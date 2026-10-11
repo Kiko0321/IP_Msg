@@ -13,7 +13,16 @@
 FROM node:24-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# The desktop app's Electron binary (MSG-34) isn't needed to build the server.
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
+# Same flaky-network settings as Dockerfile.dev: IPv4 first, patient retries, resumable cache.
+RUN --mount=type=cache,target=/root/.npm \
+    NODE_OPTIONS="--no-network-family-autoselection --dns-result-order=ipv4first" \
+    npm ci --prefer-offline --no-audit --no-fund \
+    --fetch-retries=5 \
+    --fetch-retry-mintimeout=20000 \
+    --fetch-retry-maxtimeout=120000 \
+    --fetch-timeout=300000
 
 FROM node:24-alpine AS build
 WORKDIR /app

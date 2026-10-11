@@ -8,6 +8,7 @@ A modern real-time messenger inspired by the classic LAN tool IP Messenger, buil
 - Light, dark or device theme, saved per user
 - Responsive: sidebar on desktop, tab bar on phones
 - Installable as an app (PWA) on phones and desktops, with an offline page
+- Desktop app with installers for Windows and Linux ([docs/desktop.md](docs/desktop.md))
 
 How to use the app: **[docs/user-guide.md](docs/user-guide.md)**.
 
@@ -74,7 +75,7 @@ A few settings live in the Dashboard:
 1. **Authentication → Sign In / Providers → Email:** enabled. Decide whether **Confirm email** is on; the app handles both.
 2. **Authentication → URL Configuration:**
    - **Site URL:** `http://localhost:3000` (your production URL later)
-   - **Redirect URLs:** `http://localhost:3000/auth/confirm**` (plus `https://<prod-domain>/auth/confirm**`). The `**` lets the password reset link carry `?next=/reset-password`.
+   - **Redirect URLs:** `http://localhost:3000/auth/confirm**` (plus `https://<prod-domain>/auth/confirm**`, and `http://127.0.0.1:47321/auth/confirm**` for the [desktop app](docs/desktop.md)). The `**` lets the password reset link carry `?next=/reset-password`.
 3. **Realtime:** public channels must be allowed (the default), for online presence.
 
 ## Database and migrations
@@ -163,6 +164,7 @@ supabase/
   migrations/  seed.sql  checks/  config.toml
 e2e/                 Playwright tests
 public/              PWA files: icons, service worker (sw.js), offline page
+desktop/             Electron desktop app and installer config
 docs/                user guide, deployment, observability, network information
 proxy.ts             refreshes the auth session on every request
 instrumentation.ts   server error logging
@@ -174,6 +176,7 @@ instrumentation.ts   server error logging
 | --- | --- |
 | [docs/user-guide.md](docs/user-guide.md) | Using the app |
 | [docs/deployment.md](docs/deployment.md) | Production Docker image or Vercel, env vars, Supabase Auth URLs, release flow |
+| [docs/desktop.md](docs/desktop.md) | Desktop app: installers for Windows and Linux, building them, how it works |
 | [docs/observability.md](docs/observability.md) | Structured logs, tracing an "Error ID", what is never logged |
 | [docs/network-information.md](docs/network-information.md) | What "IP" means in this app, who sees it, limitations |
 | [e2e/README.md](e2e/README.md) | End-to-end test setup |
@@ -203,6 +206,7 @@ Work is tracked as tickets (`MSG-NN`) on the GitHub project board, grouped into 
 | Every page shows "Missing NEXT_PUBLIC_SUPABASE_URL…" | Create `.env.local` from `.env.example` and restart the dev server |
 | "NEXT_PUBLIC_SUPABASE_URL must be the project URL without a path" | Remove `/rest/v1/` (or any path) from the URL |
 | `npm install` or `npx` fails with `ETIMEDOUT` while `curl` works | Node gives up on slow IPv4 connections when there's no IPv6. Run `export NODE_OPTIONS="--no-network-family-autoselection --dns-result-order=ipv4first"` and retry |
+| `docker compose up --build` fails at `npm ci` with `ECONNRESET` | The network dropped mid-download. Run the same command again: packages already downloaded are kept in Docker's build cache, so each retry continues where the last one stopped |
 | Supabase SQL Editor says "Backend error! Retry your query" | Use the CLI instead: `npx supabase db query --linked -f <file.sql>` |
 | Confirmation or reset email link goes to the wrong site | Set Site URL and Redirect URLs in Supabase (see [setup](#supabase-project-setup)) |
 | Messages don't appear live | Check that `npm run db:status` shows all migrations applied; the Realtime migration is `…_enable_messages_realtime` |

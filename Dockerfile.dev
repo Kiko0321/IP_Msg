@@ -3,12 +3,17 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-# COPY package.json package-lock.json ./
-# RUN npm ci
-
+# The desktop app's Electron binary (MSG-34) isn't needed in a container.
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
 COPY package.json package-lock.json ./
-RUN npm ci \
+# Survives flaky networks (ECONNRESET / ETIMEDOUT): IPv4 first, patient retries, and a cache mount
+# that keeps every package already downloaded, so a failed build resumes instead of starting over.
+RUN --mount=type=cache,target=/root/.npm \
+    NODE_OPTIONS="--no-network-family-autoselection --dns-result-order=ipv4first" \
+    npm ci --prefer-offline --no-audit --no-fund \
     --fetch-retries=5 \
+    --fetch-retry-mintimeout=20000 \
+    --fetch-retry-maxtimeout=120000 \
     --fetch-timeout=300000
 
 COPY . .

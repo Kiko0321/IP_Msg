@@ -1,0 +1,91 @@
+# MSG-34: builds the desktop installers. Windows is built on Windows and Linux on Linux, because
+# the bundled server carries native modules (sharp) for the platform it was installed on.
+#
+# - Run by hand (Actions → Desktop app → Run workflow): installers are attached to the run.
+# - PRs that touch the desktop app: builds with placeholder Supabase values, to check the packaging.
+# - Push a version tag (git tag v0.1.0 && git push origin v0.1.0): also published as a GitHub Release.
+#
+# Needs the NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY repository secrets:
+# they are compiled into the app, so installers built without them can't reach Supabase.
+name: Desktop app
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - "desktop/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/desktop.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: --linux
+            files: |
+              dist-desktop/*.AppImage
+              dist-desktop/*.deb
+          - os: windows-latest
+            target: --win
+            files: dist-desktop/*.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      IS_PR: ${{ github.event_name == 'pull_request' }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ github.event_name == 'pull_request' && 'https://placeholder.supabase.co' || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ github.event_name == 'pull_request' && 'sb_publishable_placeholder' || secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - name: Require the Supabase build secrets
+        if: env.IS_PR != 'true'
+        shell: bash
+        run: |
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::Add the NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY repository secrets (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build installers
+        run: npm run desktop:dist -- ${{ matrix.target }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ runner.os }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: installers/*
+          generate_release_notes: true

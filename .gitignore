@@ -27,3 +27,6 @@ npm-debug.log*
 .DS_Store
 *.pem
 .vercel
+
+# desktop installers (MSG-34)
+/dist-desktop

@@ -1,0 +1,43 @@
+# MSG-34: installers for the desktop app. Build with `npm run desktop:dist -- --linux` or `--win`
+# (Windows installers are built on Windows, see .github/workflows/desktop.yml). Output: dist-desktop/
+appId: io.github.kiko0321.ipmessenger
+productName: IP Messenger
+executableName: ip-messenger
+copyright: Copyright © 2026 Kiko
+directories:
+  output: dist-desktop
+  buildResources: desktop
+
+# The app itself is only the Electron main process; the Next.js server ships as a resource.
+files:
+  - desktop/main.cjs
+  - desktop/icon.png
+  - package.json
+  - "!node_modules/**/*"
+# electron-builder skips dot-folders unless named, and node_modules unless copied on its own.
+extraResources:
+  - from: .next/standalone
+    to: server
+    filter: ["**/*", ".next/**/*", "!node_modules"]
+  - from: .next/standalone/node_modules
+    to: server/node_modules
+    filter: ["**/*"]
+icon: desktop/icon.png
+
+win:
+  target: [nsis]
+  artifactName: IP-Messenger-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: IP Messenger
+
+linux:
+  target: [AppImage, deb]
+  category: Network
+  syncDesktopName: true
+  maintainer: Kiko <Kiko0321@users.noreply.github.com>
+  synopsis: A modern messenger inspired by IP Messenger
+  artifactName: ip-messenger-${version}-${arch}.${ext}
