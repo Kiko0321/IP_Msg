@@ -31,6 +31,14 @@ The installed app is the same as the website and updates by itself. Without a co
 
 A green dot on someone's picture means they're online right now.
 
+## Group chats
+
+1. Choose **New group**: on **Contacts**, on **Chats** (phone), or from the "Select a conversation" screen (computer).
+2. Give the group a name, then tick the people to add. Type in **Filter by name** to find someone; people you've already ticked stay selected. A group can have up to 50 people, including you.
+3. Press **Create group**. The group opens and appears in everyone's chat list.
+
+In a group, each message shows who sent it. You're the group's owner.
+
 ## Chatting
 
 - **Send:** type in the box at the bottom and press **Enter** or **Send**. Use **Shift + Enter** for a new line. Messages can be up to 4,000 characters.

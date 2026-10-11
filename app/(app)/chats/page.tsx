@@ -17,12 +17,17 @@ export default async function ChatsPage() {
       <main className="flex flex-col md:hidden">
         <div className="flex items-center justify-between px-4 pt-6 pb-3">
           <h1 className="text-2xl font-bold">Chats</h1>
-          <Link
-            href="/contacts"
-            className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white dark:bg-neutral-100 dark:text-neutral-900"
-          >
-            New chat
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/groups/new" className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700">
+              New group
+            </Link>
+            <Link
+              href="/contacts"
+              className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white dark:bg-neutral-100 dark:text-neutral-900"
+            >
+              New chat
+            </Link>
+          </div>
         </div>
         <ConversationList supabase={supabase} me={me} />
       </main>
@@ -33,6 +38,10 @@ export default async function ChatsPage() {
           Choose a chat on the left, or{" "}
           <Link href="/contacts" className="underline">
             start a new one
+          </Link>{" "}
+          or{" "}
+          <Link href="/groups/new" className="underline">
+            create a group
           </Link>
           .
         </p>

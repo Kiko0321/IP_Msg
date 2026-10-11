@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import { OnlineDot } from "@/components/presence/online-status";
@@ -46,8 +47,14 @@ export default async function ContactsPage({
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-col gap-6 p-6">
-      <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Contacts</h1>
+        <Link
+          href="/groups/new"
+          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700"
+        >
+          New group
+        </Link>
       </div>
 
       <form role="search" className="flex gap-2">
