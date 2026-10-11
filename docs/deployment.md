@@ -90,6 +90,10 @@ Without this, confirmation and password reset emails link to the wrong host.
 
 Installing the app (PWA) needs HTTPS; `localhost` is the only exception.
 
+## Moderation
+
+User reports (MSG-43) are stored in the `reports` table: who reported whom, the reason, optional details and a copy of the reported message's text. Review them in the Supabase Dashboard (**Table Editor → reports**, or `select * from reports order by created_at desc` in the SQL Editor). Users can only file and see their own reports, so the Dashboard (or the service role) is the only place they're all visible. To act on one, for example to remove an abusive account, use **Authentication → Users**.
+
 ## Release flow
 
 `main` is the production branch and only ever **fast-forwards** to `dev`:

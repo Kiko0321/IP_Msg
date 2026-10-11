@@ -76,6 +76,12 @@ Under **Settings**:
 
 Settings are saved to your account, so they follow you to every device. Notifications work while the app is open, in a tab or window, even in the background; the desktop app shows them as normal system notifications.
 
+## Blocking and reporting
+
+- **Block someone:** open your chat with them, press **⋯** at the top right and choose **Block**. Neither of you can then send messages in that chat or start a new one. They aren't told. Group chats you share aren't affected.
+- **Unblock:** the same **⋯** menu, or **Settings → Blocked people**.
+- **Report someone:** **⋯ → Report** in your chat with them, or **Report** under one of their messages (it appears when you point at the message). Choose a reason and add details if you like. Reports go to the app's administrators; the person isn't told.
+
 ## Privacy
 
 - Only the members of a conversation can read it or post in it.

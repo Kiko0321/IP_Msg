@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatView } from "@/components/chat/chat-view";
 import { OnlineStatus } from "@/components/presence/online-status";
+import { ChatSafety } from "@/components/safety/chat-safety";
 import { MESSAGE_COLUMNS, type ChatMember, type ChatMessage } from "@/lib/chat/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -81,9 +82,27 @@ export default async function ChatPage({
     <OnlineStatus userId={otherMember.user_id} lastSeenAt={otherMember.profiles?.last_seen_at ?? null} />
   ) : undefined;
 
+  // MSG-43: in a direct chat, a block either way stops sending (enforced by RLS; shown here).
+  let blockedByMe = false;
+  let blockNotice: string | undefined;
+  if (!isGroup && otherMember) {
+    const [{ data: myBlock }, { data: blockedEitherWay }] = await Promise.all([
+      supabase.from("blocks").select("blocked_id").eq("blocker_id", me).eq("blocked_id", otherMember.user_id).maybeSingle(),
+      supabase.rpc("is_blocked_with", { other: otherMember.user_id }),
+    ]);
+    blockedByMe = Boolean(myBlock);
+    if (blockedByMe) blockNotice = `You blocked ${title}. Unblock them (⋯ above) to send messages.`;
+    else if (blockedEitherWay) blockNotice = "You can't send messages in this chat.";
+  }
+
   return (
     <main className="mx-auto flex h-full w-full max-w-3xl flex-col">
-      <ChatHeader title={title} subtitle={subtitle} avatarUrl={isGroup ? null : others[0]?.avatar_url} />
+      <ChatHeader
+        title={title}
+        subtitle={subtitle}
+        avatarUrl={isGroup ? null : others[0]?.avatar_url}
+        actions={!isGroup && otherMember ? <ChatSafety userId={otherMember.user_id} name={title} blocked={blockedByMe} /> : undefined}
+      />
       {notice && NOTICES[notice] && (
         <p role="alert" className="mx-4 mt-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
           {NOTICES[notice]}
@@ -97,6 +116,7 @@ export default async function ChatPage({
         isGroup={isGroup}
         hasOlder={messages.length === HISTORY_LIMIT}
         highlightId={highlightId && UUID_PATTERN.test(highlightId) ? highlightId : undefined}
+        blockNotice={blockNotice}
         readAt={Object.fromEntries(conversation.conversation_members.map((m) => [m.user_id, m.last_read_at]))}
       />
     </main>
