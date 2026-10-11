@@ -16,6 +16,7 @@ on:
     branches: [dev, main]
     paths:
       - "desktop/**"
+      - "scripts/desktop-smoke.mjs"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/desktop.yml"
@@ -66,6 +67,11 @@ jobs:
 
       - name: Build installers
         run: npm run desktop:dist -- ${{ matrix.target }}
+
+      # MSG-35: launch the packaged Linux app and check its bundled server (scripts/desktop-smoke.mjs).
+      - name: Smoke-test the Linux app
+        if: runner.os == 'Linux'
+        run: xvfb-run -a node scripts/desktop-smoke.mjs
 
       - uses: actions/upload-artifact@v4
         with:

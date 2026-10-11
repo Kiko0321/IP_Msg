@@ -27,6 +27,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:regression": "node scripts/regression.mjs",
+    "test:desktop": "node scripts/desktop-smoke.mjs",
     "desktop:prepare": "node desktop/prepare.cjs",
     "desktop": "npm run build && npm run desktop:prepare && electron .",
     "desktop:dist": "npm run build && npm run desktop:prepare && electron-builder --config desktop/electron-builder.yml --publish never"

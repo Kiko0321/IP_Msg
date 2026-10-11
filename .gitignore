@@ -30,3 +30,4 @@ npm-debug.log*
 
 # desktop installers (MSG-34)
 /dist-desktop
+/regression-report

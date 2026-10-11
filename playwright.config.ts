@@ -33,7 +33,8 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: `npm run build && npx next start -p ${PORT}`,
+        // E2E_SKIP_BUILD=1 reuses an existing build (the regression runner builds just before).
+        command: `${process.env.E2E_SKIP_BUILD ? "" : "npm run build && "}npx next start -p ${PORT}`,
         url: `${baseURL}/sign-in`,
         reuseExistingServer: !process.env.CI,
         timeout: 240_000,

@@ -1,0 +1,54 @@
+# MSG-35: full regression suite (docs/testing.md), nightly on main and on demand.
+# Runs everything CI runs on each PR, plus the production Docker image and the packaged desktop app,
+# against the real Supabase project. The two-user chat test also runs when the E2E_* secrets exist.
+name: Regression
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # every night, 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regression
+  cancel-in-progress: false
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      E2E_USER_A_EMAIL: ${{ secrets.E2E_USER_A_EMAIL }}
+      E2E_USER_A_PASSWORD: ${{ secrets.E2E_USER_A_PASSWORD }}
+      E2E_USER_B_EMAIL: ${{ secrets.E2E_USER_B_EMAIL }}
+      E2E_USER_B_PASSWORD: ${{ secrets.E2E_USER_B_PASSWORD }}
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install the browser for Playwright
+        run: npx playwright install --with-deps chromium
+
+      # The RLS check needs Supabase CLI access to the project, so it runs locally (--db) only.
+      - name: Regression suite
+        run: npm run test:regression -- --docker --desktop
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regression-results
+          path: |
+            regression-report/
+            test-results/
+          retention-days: 14

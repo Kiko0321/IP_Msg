@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 // Landing point for the sign-up confirmation and password reset (MSG-31) emails.
 // Handles both link styles: the default "?code=" (PKCE) and a custom template's "?token_hash=&type=".
-// "?next=" picks the page to open once signed in; only same-site paths are accepted.
+// "?next=" picks the page to open once signed in; only same-site paths are accepted (see sameSiteUrl).
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
@@ -25,7 +25,14 @@ export async function GET(request: NextRequest) {
   let target: string;
   if (!ok) target = isReset ? "/forgot-password?notice=link-expired" : "/sign-in?notice=confirm-failed";
   else if (isReset) target = "/reset-password";
-  else target = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  else target = next;
 
-  return NextResponse.redirect(new URL(target, origin));
+  return NextResponse.redirect(sameSiteUrl(target, origin));
+}
+
+// Resolves a path against this site and falls back to "/" if it would leave it. Checking the
+// resolved URL also catches tricks like "//evil.example" and "/\evil.example" (browsers read "\" as "/").
+function sameSiteUrl(path: string, origin: string) {
+  const url = new URL(path || "/", origin);
+  return url.origin === origin && path.startsWith("/") ? url : new URL("/", origin);
 }
