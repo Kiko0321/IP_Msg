@@ -66,6 +66,10 @@ Under **Profile** you can:
 - **upload a picture** (JPEG, PNG or WebP, up to 2 MB), change it, or remove it to go back to your initials
 - see **Your connection (IP)**: the public IP address the app sees for you. Only you can see it; it's not saved or shown to anyone else. Details: [network-information.md](network-information.md)
 
+### Deleting your account
+
+At the bottom of **Profile**, under **Delete account**, press **Delete my account…**, enter your password and type **DELETE**. This permanently removes your profile, your messages and the files you sent, from every chat. Groups you own are handed to another member. It can't be undone.
+
 ## Settings
 
 Under **Settings**:

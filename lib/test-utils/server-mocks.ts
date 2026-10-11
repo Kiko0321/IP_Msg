@@ -49,7 +49,7 @@ export function fakeSupabase({
   const queue = [...results];
   const next = async () => queue.shift() ?? queryResult;
   const query: Record<string, unknown> = {};
-  for (const method of ["select", "insert", "update", "upsert", "delete", "eq", "neq", "in", "order", "limit"]) {
+  for (const method of ["select", "insert", "update", "upsert", "delete", "eq", "neq", "in", "not", "order", "limit"]) {
     query[method] = vi.fn(() => query);
   }
   query.single = vi.fn(next);
