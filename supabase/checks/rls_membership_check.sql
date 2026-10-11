@@ -1,5 +1,6 @@
 -- MSG-12 check: members can read and send; non-members cannot read, send or join.
 -- MSG-37: a creator can build a group (conversation, self as owner, members); only the owner adds people.
+-- MSG-40: only the sender can edit or delete a message.
 -- MSG-39: only members can upload or see a conversation's attachments; messages can't point elsewhere.
 --
 -- Run it either way:
@@ -69,6 +70,17 @@ begin
     exception when insufficient_privilege then null;
     end;
 
+    -- 2b) MSG-40: only the sender can edit or delete a message (RLS silently skips other rows).
+    perform set_config('request.jwt.claims', json_build_object('sub', outsider_id, 'role', 'authenticated')::text, true);
+    update public.messages set content = 'tampered' where conversation_id = chat_id;
+    delete from public.messages where conversation_id = chat_id;
+    perform set_config('request.jwt.claims', json_build_object('sub', member_id, 'role', 'authenticated')::text, true);
+    select count(*) into n from public.messages where conversation_id = chat_id and content <> 'tampered';
+    if n <> 2 then raise exception 'FAIL: a non-sender changed or deleted messages (% left intact)', n; end if;
+    update public.messages set content = 'hello, edited', edited_at = now() where conversation_id = chat_id and content = 'hello';
+    get diagnostics n = row_count;
+    if n <> 1 then raise exception 'FAIL: the sender could not edit their message'; end if;
+
     -- 3) MSG-37: creating a group the way the app does: the conversation, then the creator as
     --    owner, then the others. Afterwards members can read it, but only the owner can add people.
     perform set_config('request.jwt.claims', json_build_object('sub', member_id, 'role', 'authenticated')::text, true);
@@ -136,4 +148,4 @@ begin
 end;
 $check$;
 
-select 'PASS: members can read/send; non-members cannot read, send or join; groups: creator builds, only owner adds; attachments: members only' as result;
+select 'PASS: members can read/send; non-members cannot read, send or join; only senders edit/delete; groups: creator builds, only owner adds; attachments: members only' as result;

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeSupabase, formData, run, type FakeSupabase } from "@/lib/test-utils/server-mocks";
-import { sendMessage } from "./chat/[id]/actions";
+import { deleteMessage, editMessage, sendMessage } from "./chat/[id]/actions";
 import { startConversation } from "./contacts/actions";
 import { removeAvatar, setAvatar, updateProfile } from "./profile/actions";
 import { updateSettings } from "./settings/actions";
@@ -73,6 +73,53 @@ describe("sendMessage with an attachment (MSG-39)", () => {
   it("refuses a file from another conversation's folder", async () => {
     const result = await sendMessage(CHAT, "look", { ...file, path: `${OTHER}/0f0e0d0c-0b0a-4908-8706-050403020100.png` });
     expect(result).toEqual({ error: "Invalid attachment." });
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+});
+
+describe("editMessage and deleteMessage (MSG-40)", () => {
+  const MSG = "66666666-6666-4666-8666-666666666666";
+  const mine = { id: MSG, sender_id: ME, attachment_path: null };
+
+  it("edits the user's own message and marks it edited", async () => {
+    const saved = { ...mine, content: "fixed", edited_at: "2026-10-12T00:00:00Z" };
+    supabase = fakeSupabase({ userId: ME, results: [{ data: mine, error: null }, { data: saved, error: null }] });
+
+    expect((await editMessage(CHAT, MSG, "  fixed ")).message).toEqual(saved);
+    expect(supabase.query.update).toHaveBeenCalledWith({ content: "fixed", edited_at: expect.any(String) });
+  });
+
+  it("refuses to edit someone else's message", async () => {
+    supabase = fakeSupabase({ userId: ME, results: [{ data: { ...mine, sender_id: OTHER }, error: null }] });
+    expect(await editMessage(CHAT, MSG, "hacked")).toEqual({ error: "You can only change your own messages." });
+    expect(supabase.query.update).not.toHaveBeenCalled();
+  });
+
+  it("keeps some text unless the message has a file", async () => {
+    supabase = fakeSupabase({ userId: ME, results: [{ data: mine, error: null }] });
+    expect((await editMessage(CHAT, MSG, "   ")).error).toBe("Type a message.");
+
+    const withFile = { ...mine, attachment_path: `${CHAT}/f.png` };
+    supabase = fakeSupabase({ userId: ME, results: [{ data: withFile, error: null }, { data: withFile, error: null }] });
+    expect((await editMessage(CHAT, MSG, "   ")).error).toBeUndefined();
+  });
+
+  it("reports a message that's gone", async () => {
+    supabase = fakeSupabase({ userId: ME, results: [{ data: null, error: null }] });
+    expect(await deleteMessage(CHAT, MSG)).toEqual({ error: "That message no longer exists." });
+  });
+
+  it("deletes the message and its file", async () => {
+    const withFile = { ...mine, attachment_path: `${CHAT}/f.png` };
+    supabase = fakeSupabase({ userId: ME, results: [{ data: withFile, error: null }, { data: null, error: null }] });
+
+    expect(await deleteMessage(CHAT, MSG)).toEqual({});
+    expect(supabase.query.delete).toHaveBeenCalled();
+    expect(supabase.bucket.remove).toHaveBeenCalledWith([`${CHAT}/f.png`]);
+  });
+
+  it("rejects malformed ids", async () => {
+    expect(await deleteMessage(CHAT, "nope")).toEqual({ error: "Unknown message." });
     expect(supabase.from).not.toHaveBeenCalled();
   });
 });

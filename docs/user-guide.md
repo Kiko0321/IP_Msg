@@ -43,6 +43,7 @@ In a group, each message shows who sent it. You're the group's owner.
 
 - **Send:** type in the box at the bottom and press **Enter** or **Send**. Use **Shift + Enter** for a new line. Messages can be up to 4,000 characters.
 - **Files and images:** press **📎** next to the message box and choose a file (up to 10 MB: images, PDF, text, CSV, ZIP, Word, Excel or PowerPoint). Add some text if you like, then **Send**. Images appear in the chat (click to open full size); other files show as a card you click to download. Only the people in the conversation can open them.
+- **Edit or delete:** on your own message, press **⋯**, then **Edit** (Enter saves, Esc cancels) or **Delete** (asks first; removes it, and its file, for everyone). Edited messages show "edited". Changes appear for others right away.
 - **Sending status:** your message appears immediately with "Sending…" until it's saved. If it shows **Not sent**, check your connection and send it again.
 - **Live updates:** new messages from others appear by themselves; you don't need to refresh.
 - **Messages:** they're shown oldest to newest, with the date between days. In group chats, each message shows who sent it.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { sendMessage } from "@/app/(app)/chat/[id]/actions";
+import { deleteMessage, editMessage, sendMessage } from "@/app/(app)/chat/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
 import { ATTACHMENT_BUCKET, attachmentPath } from "@/lib/validation/attachment";
 import { MESSAGE_COLUMNS, type ChatMember, type ChatMessage, type DisplayMessage } from "@/lib/chat/types";
@@ -34,6 +34,9 @@ export function ChatView({
   const [older, setOlder] = useState<ChatMessage[]>([]);
   const [hasOlder, setHasOlder] = useState(initialHasOlder);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  // MSG-40: edits (a newer copy of the row) and deletions (null), from this user or live.
+  const [changes, setChanges] = useState<ReadonlyMap<string, ChatMessage | null>>(() => new Map());
+  const change = (id: string, row: ChatMessage | null) => setChanges((map) => new Map(map).set(id, row));
   const [, startTransition] = useTransition();
 
   // Newest message time currently shown; the catch-up query below starts from here.
@@ -87,6 +90,17 @@ export function ChatView({
           { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
           (payload) => addRow(payload.new as ChatMessage),
         )
+        // MSG-40: edits and deletions. Delete events only carry the id and can't be filtered by
+        // conversation, so ids from other chats are simply not found here.
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+          (payload) => change((payload.new as ChatMessage).id, payload.new as ChatMessage),
+        )
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "messages" }, (payload) => {
+          const id = (payload.old as { id?: string }).id;
+          if (id) change(id, null);
+        })
         .subscribe((status) => {
           if (status === "SUBSCRIBED") void catchUp();
         });
@@ -104,7 +118,28 @@ export function ChatView({
     ...older.filter((m) => !serverIds.has(m.id)),
     ...initialMessages,
     ...local.filter((m) => !serverIds.has(m.id)),
-  ].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  ]
+    .flatMap((m) => {
+      if (!changes.has(m.id)) return [m];
+      const changed = changes.get(m.id);
+      return changed ? [{ ...m, ...changed }] : [];
+    })
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+
+  // MSG-40: shown at once, undone if the server refuses.
+  async function handleEdit(message: DisplayMessage, content: string) {
+    change(message.id, { ...message, content, edited_at: new Date().toISOString() });
+    const result = await editMessage(conversationId, message.id, content);
+    change(message.id, result.message ?? message);
+    return result.error;
+  }
+
+  async function handleDelete(message: DisplayMessage) {
+    change(message.id, null);
+    const result = await deleteMessage(conversationId, message.id);
+    if (result.error) change(message.id, message);
+    return result.error;
+  }
 
   // MSG-38: fetch the page of messages before the oldest one shown. RLS limits it to members.
   async function loadOlder() {
@@ -175,6 +210,8 @@ export function ChatView({
         hasOlder={hasOlder}
         loadingOlder={loadingOlder}
         onLoadOlder={loadOlder}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
       <MessageInput onSend={handleSend} />
       <ReadMarker conversationId={conversationId} latestMessageAt={messages.at(-1)?.created_at} />

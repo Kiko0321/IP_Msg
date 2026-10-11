@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ChatMember, DisplayMessage } from "@/lib/chat/types";
+import { MessageActions, MessageEditor } from "./message-actions";
 import { MessageAttachment } from "./message-attachment";
 
 // Client component: times render in the viewer's time zone, and MSG-18 adds live updates here.
@@ -13,6 +14,8 @@ export function MessageList({
   hasOlder = false,
   loadingOlder = false,
   onLoadOlder,
+  onEdit,
+  onDelete,
 }: {
   messages: DisplayMessage[];
   members: Record<string, ChatMember>;
@@ -22,7 +25,11 @@ export function MessageList({
   hasOlder?: boolean;
   loadingOlder?: boolean;
   onLoadOlder?: () => void;
+  /** MSG-40: change or remove the user's own saved messages; each resolves to an error, if any. */
+  onEdit?: (message: DisplayMessage, content: string) => Promise<string | undefined>;
+  onDelete?: (message: DisplayMessage) => Promise<string | undefined>;
 }) {
+  const [editingId, setEditingId] = useState<string | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
   const endRef = useRef<HTMLLIElement>(null);
   // Scroll height before older messages were added on top, to keep the same messages in view.
@@ -108,7 +115,16 @@ export function MessageList({
                   mine={mine}
                 />
               )}
-              {message.content && <p className="whitespace-pre-wrap break-words">{message.content}</p>}
+              {editingId === message.id && onEdit ? (
+                <MessageEditor
+                  initial={message.content}
+                  allowEmpty={Boolean(message.attachment_path)}
+                  onSave={(content) => onEdit(message, content)}
+                  onCancel={() => setEditingId(null)}
+                />
+              ) : (
+                message.content && <p className="whitespace-pre-wrap break-words">{message.content}</p>
+              )}
               <time
                 dateTime={message.created_at}
                 suppressHydrationWarning
@@ -124,6 +140,9 @@ export function MessageList({
                 </span>
               )}
             </div>
+            {mine && !message.status && onEdit && onDelete && editingId !== message.id && (
+              <MessageActions onEdit={() => setEditingId(message.id)} onDelete={() => onDelete(message)} />
+            )}
           </li>
         );
       })}
