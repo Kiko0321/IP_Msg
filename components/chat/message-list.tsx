@@ -16,6 +16,7 @@ export function MessageList({
   onLoadOlder,
   onEdit,
   onDelete,
+  highlightId,
 }: {
   messages: DisplayMessage[];
   members: Record<string, ChatMember>;
@@ -28,6 +29,8 @@ export function MessageList({
   /** MSG-40: change or remove the user's own saved messages; each resolves to an error, if any. */
   onEdit?: (message: DisplayMessage, content: string) => Promise<string | undefined>;
   onDelete?: (message: DisplayMessage) => Promise<string | undefined>;
+  /** MSG-41: scroll to and highlight this message (opened from search). */
+  highlightId?: string;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
@@ -50,6 +53,13 @@ export function MessageList({
     heightBeforeOlder.current = null;
   }, [oldestId]);
 
+  // MSG-41: bring a message opened from search into view. Runs after the scroll-to-newest effect.
+  const highlightShown = Boolean(highlightId && messages.some((m) => m.id === highlightId));
+  useEffect(() => {
+    if (!highlightShown) return;
+    listRef.current?.querySelector(`[data-message-id="${highlightId}"]`)?.scrollIntoView({ block: "center" });
+  }, [highlightId, highlightShown]);
+
   function loadOlder() {
     heightBeforeOlder.current = listRef.current?.scrollHeight ?? null;
     onLoadOlder?.();
@@ -65,6 +75,11 @@ export function MessageList({
 
   return (
     <ol ref={listRef} className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-4" aria-label="Messages">
+      {highlightId && !highlightShown && (
+        <li role="status" className="pb-2 text-center text-xs text-neutral-500">
+          That message is further back. Press <strong>Load older messages</strong> to find it.
+        </li>
+      )}
       <li className="flex justify-center pb-2">
         {hasOlder ? (
           <button
@@ -87,7 +102,11 @@ export function MessageList({
         const newSender = newDay || previous?.sender_id !== message.sender_id;
 
         return (
-          <li key={message.id} className="flex flex-col">
+          <li
+            key={message.id}
+            data-message-id={message.id}
+            className={`flex flex-col ${message.id === highlightId ? "rounded-xl bg-yellow-100/70 py-1 dark:bg-yellow-900/40" : ""}`}
+          >
             {newDay && (
               <p className="my-3 text-center text-xs text-neutral-500" suppressHydrationWarning>
                 {date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}

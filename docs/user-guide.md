@@ -50,6 +50,10 @@ In a group, each message shows who sent it. You're the group's owner.
 - **Older messages:** a chat opens on its latest 100 messages. To read further back, press **Load older messages** at the top (50 more each time). **Start of the conversation** means you've reached the first message.
 - **Online status:** in a one-to-one chat, the header shows **Online** or when the person was **last seen**.
 
+## Searching messages
+
+Open **Search** (the 🔍 next to **New chat** on a computer, or the **Search** tab on a phone) and type at least two characters. It looks through every chat you're in, including file names, newest first. Click a result to open the chat at that message, which is highlighted. If it's further back than the chat has loaded, press **Load older messages** until it appears.
+
 ## Your chats list
 
 Conversations are sorted by the latest activity, with a preview of the last message ("You: …" for your own). A **blue number** shows how many messages you haven't read. It clears when you open the chat.

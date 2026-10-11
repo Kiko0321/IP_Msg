@@ -28,3 +28,23 @@ describe("MessageList older messages (MSG-38)", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });
+
+describe("MessageList search result (MSG-41)", () => {
+  const members: Record<string, ChatMember> = { me: { user_id: "me", display_name: "Me", avatar_url: null } };
+  const one: DisplayMessage[] = [
+    { id: "1", sender_id: "me", content: "hi", created_at: "2026-10-11T10:00:00Z", edited_at: null },
+  ];
+
+  it("highlights the message opened from search", () => {
+    const { container } = render(
+      <MessageList messages={one} members={members} currentUserId="me" showSenderNames={false} highlightId="1" />,
+    );
+    expect(container.querySelector('[data-message-id="1"]')?.className).toMatch(/bg-yellow/);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("says when the message is older than what's loaded", () => {
+    render(<MessageList messages={one} members={members} currentUserId="me" showSenderNames={false} hasOlder highlightId="999" />);
+    expect(screen.getByRole("status")).toHaveTextContent("further back");
+  });
+});

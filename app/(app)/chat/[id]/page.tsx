@@ -30,10 +30,10 @@ export default async function ChatPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ notice?: string }>;
+  searchParams: Promise<{ notice?: string; m?: string }>;
 }) {
   const { id } = await params;
-  const { notice } = await searchParams;
+  const { notice, m: highlightId } = await searchParams;
   if (!UUID_PATTERN.test(id)) notFound();
 
   const supabase = await createClient();
@@ -95,6 +95,7 @@ export default async function ChatPage({
         currentUserId={me}
         isGroup={isGroup}
         hasOlder={messages.length === HISTORY_LIMIT}
+        highlightId={highlightId && UUID_PATTERN.test(highlightId) ? highlightId : undefined}
       />
     </main>
   );
