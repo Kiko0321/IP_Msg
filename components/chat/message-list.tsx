@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 import type { ChatMember, DisplayMessage } from "@/lib/chat/types";
+import { MessageAttachment } from "./message-attachment";
 
 // Client component: times render in the viewer's time zone, and MSG-18 adds live updates here.
 export function MessageList({
@@ -97,7 +98,17 @@ export function MessageList({
                   : "self-start bg-neutral-100 dark:bg-neutral-800"
               } ${newSender ? "mt-1" : ""} ${message.status === "sending" ? "opacity-60" : ""}`}
             >
-              <p className="whitespace-pre-wrap break-words">{message.content}</p>
+              {message.attachment_name && message.attachment_type && (
+                <MessageAttachment
+                  path={message.attachment_path}
+                  name={message.attachment_name}
+                  type={message.attachment_type}
+                  size={message.attachment_size ?? 0}
+                  localFile={message.localFile}
+                  mine={mine}
+                />
+              )}
+              {message.content && <p className="whitespace-pre-wrap break-words">{message.content}</p>}
               <time
                 dateTime={message.created_at}
                 suppressHydrationWarning

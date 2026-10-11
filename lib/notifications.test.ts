@@ -71,4 +71,8 @@ describe("notificationText", () => {
     expect(body.length).toBe(120);
     expect(body.endsWith("…")).toBe(true);
   });
+
+  it("names the file when a message has no text (MSG-39)", () => {
+    expect(notificationText({ ...message, content: "", attachment_name: "plan.pdf" }, "A", null).body).toBe("📎 plan.pdf");
+  });
 });

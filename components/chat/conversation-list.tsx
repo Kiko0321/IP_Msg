@@ -15,7 +15,7 @@ type Conversation = {
   created_at: string;
   last_message_at: string | null;
   conversation_members: Member[];
-  messages: { content: string; created_at: string; sender_id: string }[];
+  messages: { content: string; created_at: string; sender_id: string; attachment_name: string | null }[];
 };
 
 // The user's conversations, newest activity first, with last-message preview (MSG-15) and
@@ -26,7 +26,7 @@ export async function ConversationList({ supabase, me }: { supabase: ServerClien
     supabase
       .from("conversations")
       .select(
-        "id, kind, title, created_at, last_message_at, conversation_members(user_id, profiles(display_name, avatar_url)), messages(content, created_at, sender_id)",
+        "id, kind, title, created_at, last_message_at, conversation_members(user_id, profiles(display_name, avatar_url)), messages(content, created_at, sender_id, attachment_name)",
       )
       .order("last_message_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
@@ -87,7 +87,9 @@ export async function ConversationList({ supabase, me }: { supabase: ServerClien
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <p className={`truncate text-sm ${unreadCount ? "text-foreground" : "text-neutral-500"}`}>
-                    {last ? `${last.sender_id === me ? "You: " : ""}${last.content}` : "No messages yet"}
+                    {last
+                      ? `${last.sender_id === me ? "You: " : ""}${last.content || (last.attachment_name ? `📎 ${last.attachment_name}` : "")}`
+                      : "No messages yet"}
                   </p>
                   {unreadCount > 0 && (
                     <span

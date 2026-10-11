@@ -54,6 +54,29 @@ describe("sendMessage", () => {
   });
 });
 
+describe("sendMessage with an attachment (MSG-39)", () => {
+  const file = { path: `${CHAT}/0f0e0d0c-0b0a-4908-8706-050403020100.png`, name: "photo.png", type: "image/png", size: 2048 };
+
+  it("allows a file without text and saves its details", async () => {
+    await sendMessage(CHAT, "  ", file);
+    expect(supabase.query.insert).toHaveBeenCalledWith({
+      conversation_id: CHAT,
+      sender_id: ME,
+      content: "",
+      attachment_path: file.path,
+      attachment_name: "photo.png",
+      attachment_type: "image/png",
+      attachment_size: 2048,
+    });
+  });
+
+  it("refuses a file from another conversation's folder", async () => {
+    const result = await sendMessage(CHAT, "look", { ...file, path: `${OTHER}/0f0e0d0c-0b0a-4908-8706-050403020100.png` });
+    expect(result).toEqual({ error: "Invalid attachment." });
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+});
+
 describe("startConversation", () => {
   it("ignores an invalid user id", async () => {
     expect((await run(() => startConversation(formData({ userId: "x" })))).redirect).toBe("/contacts");

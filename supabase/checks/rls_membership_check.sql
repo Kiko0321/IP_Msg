@@ -1,5 +1,6 @@
 -- MSG-12 check: members can read and send; non-members cannot read, send or join.
 -- MSG-37: a creator can build a group (conversation, self as owner, members); only the owner adds people.
+-- MSG-39: only members can upload or see a conversation's attachments; messages can't point elsewhere.
 --
 -- Run it either way:
 --   npx supabase db query --linked -f supabase/checks/rls_membership_check.sql
@@ -93,6 +94,37 @@ begin
     exception when insufficient_privilege then null;
     end;
 
+    -- 4) MSG-39: attachments live in the conversation's folder of the private "attachments" bucket.
+    perform set_config('request.jwt.claims', json_build_object('sub', member_id, 'role', 'authenticated')::text, true);
+    insert into storage.objects (bucket_id, name, owner_id)
+      values ('attachments', chat_id::text || '/00000000-0000-4000-8000-0000000000f6.png', member_id::text);
+    insert into public.messages (conversation_id, sender_id, content, attachment_path, attachment_name, attachment_type, attachment_size)
+      values (chat_id, member_id, '', chat_id::text || '/00000000-0000-4000-8000-0000000000f6.png', 'photo.png', 'image/png', 1024);
+
+    begin
+      insert into public.messages (conversation_id, sender_id, content, attachment_path, attachment_name, attachment_type, attachment_size)
+        values (chat_id, member_id, '', group_id::text || '/00000000-0000-4000-8000-0000000000f7.png', 'x.png', 'image/png', 1);
+      raise exception 'FAIL: a message could point at another conversation''s file';
+    exception when check_violation then null;
+    end;
+
+    begin
+      insert into public.messages (conversation_id, sender_id, content) values (chat_id, member_id, '   ');
+      raise exception 'FAIL: an empty message without a file was accepted';
+    exception when check_violation then null;
+    end;
+
+    perform set_config('request.jwt.claims', json_build_object('sub', stranger_id, 'role', 'authenticated')::text, true);
+    select count(*) into n from storage.objects where bucket_id = 'attachments' and name like chat_id::text || '/%';
+    if n <> 0 then raise exception 'FAIL: a non-member can see % attachment(s)', n; end if;
+
+    begin
+      insert into storage.objects (bucket_id, name, owner_id)
+        values ('attachments', chat_id::text || '/00000000-0000-4000-8000-0000000000f8.png', stranger_id::text);
+      raise exception 'FAIL: a non-member could upload into a conversation';
+    exception when insufficient_privilege then null;
+    end;
+
     -- Everything passed: undo all of the above.
     raise exception using errcode = 'P0001', message = 'rls-check-rollback';
   exception
@@ -104,4 +136,4 @@ begin
 end;
 $check$;
 
-select 'PASS: members can read/send; non-members cannot read, send or join; groups: creator builds, only owner adds' as result;
+select 'PASS: members can read/send; non-members cannot read, send or join; groups: creator builds, only owner adds; attachments: members only' as result;
