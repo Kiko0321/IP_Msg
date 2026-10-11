@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import type { ChatMember, DisplayMessage } from "@/lib/chat/types";
 
 // Client component: times render in the viewer's time zone, and MSG-18 adds live updates here.
@@ -9,18 +9,43 @@ export function MessageList({
   members,
   currentUserId,
   showSenderNames,
+  hasOlder = false,
+  loadingOlder = false,
+  onLoadOlder,
 }: {
   messages: DisplayMessage[];
   members: Record<string, ChatMember>;
   currentUserId: string;
   showSenderNames: boolean;
+  /** MSG-38: older messages exist; show a button that calls onLoadOlder. */
+  hasOlder?: boolean;
+  loadingOlder?: boolean;
+  onLoadOlder?: () => void;
 }) {
+  const listRef = useRef<HTMLOListElement>(null);
   const endRef = useRef<HTMLLIElement>(null);
+  // Scroll height before older messages were added on top, to keep the same messages in view.
+  const heightBeforeOlder = useRef<number | null>(null);
 
-  // Keep the newest message in view.
+  // Keep the newest message in view when one arrives (not when older ones are added on top).
+  const newestId = messages.at(-1)?.id;
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
+  }, [newestId]);
+
+  // After older messages are added on top, shift the scroll position by their height.
+  const oldestId = messages[0]?.id;
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list || heightBeforeOlder.current === null) return;
+    list.scrollTop += list.scrollHeight - heightBeforeOlder.current;
+    heightBeforeOlder.current = null;
+  }, [oldestId]);
+
+  function loadOlder() {
+    heightBeforeOlder.current = listRef.current?.scrollHeight ?? null;
+    onLoadOlder?.();
+  }
 
   if (messages.length === 0) {
     return (
@@ -31,7 +56,21 @@ export function MessageList({
   }
 
   return (
-    <ol className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-4" aria-label="Messages">
+    <ol ref={listRef} className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-4" aria-label="Messages">
+      <li className="flex justify-center pb-2">
+        {hasOlder ? (
+          <button
+            type="button"
+            onClick={loadOlder}
+            disabled={loadingOlder}
+            className="rounded-full border border-neutral-300 px-3 py-1 text-xs text-neutral-600 disabled:opacity-60 dark:border-neutral-700 dark:text-neutral-300"
+          >
+            {loadingOlder ? "Loading…" : "Load older messages"}
+          </button>
+        ) : (
+          <span className="text-xs text-neutral-500">Start of the conversation</span>
+        )}
+      </li>
       {messages.map((message, index) => {
         const previous = messages[index - 1];
         const mine = message.sender_id === currentUserId;

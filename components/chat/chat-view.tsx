@@ -8,6 +8,9 @@ import { MessageInput } from "./message-input";
 import { MessageList } from "./message-list";
 import { ReadMarker } from "./read-marker";
 
+// Older messages are fetched this many at a time (MSG-38).
+const OLDER_PAGE_SIZE = 50;
+
 // Owns the conversation's client-side message state. Messages from the server (props) are merged
 // with this user's local ones (sending, failed, or saved but not yet in the props).
 export function ChatView({
@@ -16,14 +19,20 @@ export function ChatView({
   members,
   currentUserId,
   isGroup,
+  hasOlder: initialHasOlder,
 }: {
   conversationId: string;
   initialMessages: ChatMessage[];
   members: Record<string, ChatMember>;
   currentUserId: string;
   isGroup: boolean;
+  /** The server sent a full page of history, so there may be older messages (MSG-38). */
+  hasOlder: boolean;
 }) {
   const [local, setLocal] = useState<DisplayMessage[]>([]);
+  const [older, setOlder] = useState<ChatMessage[]>([]);
+  const [hasOlder, setHasOlder] = useState(initialHasOlder);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [, startTransition] = useTransition();
 
   // Newest message time currently shown; the catch-up query below starts from here.
@@ -85,9 +94,30 @@ export function ChatView({
   }, [conversationId, currentUserId]);
 
   const serverIds = new Set(initialMessages.map((m) => m.id));
-  const messages: DisplayMessage[] = [...initialMessages, ...local.filter((m) => !serverIds.has(m.id))].sort(
-    (a, b) => a.created_at.localeCompare(b.created_at),
-  );
+  const messages: DisplayMessage[] = [
+    ...older.filter((m) => !serverIds.has(m.id)),
+    ...initialMessages,
+    ...local.filter((m) => !serverIds.has(m.id)),
+  ].sort((a, b) => a.created_at.localeCompare(b.created_at));
+
+  // MSG-38: fetch the page of messages before the oldest one shown. RLS limits it to members.
+  async function loadOlder() {
+    const oldest = messages.find((m) => !m.status)?.created_at;
+    if (!oldest || loadingOlder) return;
+    setLoadingOlder(true);
+    const { data, error } = await createClient()
+      .from("messages")
+      .select("id, sender_id, content, created_at, edited_at")
+      .eq("conversation_id", conversationId)
+      .lt("created_at", oldest)
+      .order("created_at", { ascending: false })
+      .limit(OLDER_PAGE_SIZE);
+    setLoadingOlder(false);
+    if (error) return;
+    const page = (data ?? []) as ChatMessage[];
+    setOlder((list) => [...page, ...list]);
+    setHasOlder(page.length === OLDER_PAGE_SIZE);
+  }
 
   useEffect(() => {
     latestAtRef.current = messages.filter((m) => !m.status).at(-1)?.created_at;
@@ -119,7 +149,15 @@ export function ChatView({
 
   return (
     <>
-      <MessageList messages={messages} members={members} currentUserId={currentUserId} showSenderNames={isGroup} />
+      <MessageList
+        messages={messages}
+        members={members}
+        currentUserId={currentUserId}
+        showSenderNames={isGroup}
+        hasOlder={hasOlder}
+        loadingOlder={loadingOlder}
+        onLoadOlder={loadOlder}
+      />
       <MessageInput onSend={handleSend} />
       <ReadMarker conversationId={conversationId} latestMessageAt={messages.at(-1)?.created_at} />
     </>

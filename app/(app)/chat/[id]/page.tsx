@@ -94,6 +94,7 @@ export default async function ChatPage({
         members={members}
         currentUserId={me}
         isGroup={isGroup}
+        hasOlder={messages.length === HISTORY_LIMIT}
       />
     </main>
   );
