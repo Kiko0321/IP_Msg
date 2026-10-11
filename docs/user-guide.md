@@ -37,6 +37,7 @@ A green dot on someone's picture means they're online right now.
 - **Sending status:** your message appears immediately with "Sending…" until it's saved. If it shows **Not sent**, check your connection and send it again.
 - **Live updates:** new messages from others appear by themselves; you don't need to refresh.
 - **Messages:** they're shown oldest to newest, with the date between days. In group chats, each message shows who sent it.
+- **Older messages:** a chat opens on its latest 100 messages. To read further back, press **Load older messages** at the top (50 more each time). **Start of the conversation** means you've reached the first message.
 - **Online status:** in a one-to-one chat, the header shows **Online** or when the person was **last seen**.
 
 ## Your chats list
