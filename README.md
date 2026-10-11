@@ -130,17 +130,21 @@ Or build the production image: see [docs/deployment.md](docs/deployment.md).
 
 ## Testing
 
+**Regression suite:** `npm run test:regression` runs everything below in one go and writes `regression-report/report.md`. Add `--quick` while coding or `--all` before a release. See [docs/testing.md](docs/testing.md).
+
 | Command | What |
 | --- | --- |
+| `npm run test:regression` | The whole suite, with a report |
 | `npm run typecheck` | TypeScript |
 | `npm run lint` | ESLint |
 | `npm test` | Unit and component tests (Vitest and Testing Library): validation, settings, messaging components, logger, network |
 | `npm run test:watch` | Same, in watch mode |
-| `npm run test:e2e` | End-to-end tests (Playwright): two users chat on desktop and mobile, against a production build |
+| `npm run test:e2e` | End-to-end tests (Playwright): signed-out flows, installable app, and two users chatting, on desktop and mobile, against a production build |
+| `npm run test:desktop` | Smoke test of the packaged desktop app |
 
 End-to-end setup (once): run `npx playwright install chromium`, then create `.env.e2e.local` with two confirmed test users. Details: [e2e/README.md](e2e/README.md).
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs lint, build, typecheck and unit tests on every PR. It also builds and smoke-tests the dev and production Docker images. Each release publishes the production image to GHCR ([publish.yml](.github/workflows/publish.yml)). The end-to-end job runs when its secrets are configured.
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs lint, build, typecheck and unit tests on every PR. It also builds and smoke-tests the dev and production Docker images. Each release publishes the production image to GHCR ([publish.yml](.github/workflows/publish.yml)). The end-to-end job runs when its secrets are configured. The full regression suite also runs every night ([regression.yml](.github/workflows/regression.yml)).
 
 ## Project structure
 
@@ -176,6 +180,7 @@ instrumentation.ts   server error logging
 | --- | --- |
 | [docs/user-guide.md](docs/user-guide.md) | Using the app |
 | [docs/deployment.md](docs/deployment.md) | Production Docker image or Vercel, env vars, Supabase Auth URLs, release flow |
+| [docs/testing.md](docs/testing.md) | Regression suite (`npm run test:regression`), test layers, when tests run |
 | [docs/desktop.md](docs/desktop.md) | Desktop app: installers for Windows and Linux, building them, how it works |
 | [docs/observability.md](docs/observability.md) | Structured logs, tracing an "Error ID", what is never logged |
 | [docs/network-information.md](docs/network-information.md) | What "IP" means in this app, who sees it, limitations |
