@@ -46,6 +46,22 @@ This works on Render, Fly.io, Railway, Google Cloud Run, a VPS, and so on. Use t
 
 CI builds this image and smoke-tests it on every PR (`.github/workflows/ci.yml`, job `docker`).
 
+### Prebuilt image (GitHub Container Registry)
+
+Every release (push to `main`) also publishes the image to GHCR ([publish.yml](../.github/workflows/publish.yml)), built with the real Supabase values, so a host can pull it instead of building:
+
+```bash
+docker pull ghcr.io/kiko0321/ip-messenger:latest     # newest release
+docker pull ghcr.io/kiko0321/ip-messenger:sha-<commit> # a specific release, for pinning or rollback
+```
+
+One-time setup:
+
+1. Add the repository secrets `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (**Settings → Secrets and variables → Actions**). Without them the workflow fails with a clear error. The same secrets also enable the CI e2e job.
+2. After the first publish, the package appears under the repository's **Packages**. To pull it without logging in, set its visibility under **Package settings**. Otherwise log in with `echo <token> | docker login ghcr.io -u <user> --password-stdin`, using a token with `read:packages`.
+
+To re-publish without a release (for example after changing the secrets): **Actions → Publish image → Run workflow**.
+
 ## 3b. Vercel (no Docker)
 
 1. Import the GitHub repository in Vercel. It detects Next.js.

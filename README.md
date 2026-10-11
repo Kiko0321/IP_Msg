@@ -139,7 +139,7 @@ Or build the production image: see [docs/deployment.md](docs/deployment.md).
 
 End-to-end setup (once): run `npx playwright install chromium`, then create `.env.e2e.local` with two confirmed test users. Details: [e2e/README.md](e2e/README.md).
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs lint, build, typecheck and unit tests on every PR. It also builds and smoke-tests the dev and production Docker images. The end-to-end job runs when its secrets are configured.
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs lint, build, typecheck and unit tests on every PR. It also builds and smoke-tests the dev and production Docker images. Each release publishes the production image to GHCR ([publish.yml](.github/workflows/publish.yml)). The end-to-end job runs when its secrets are configured.
 
 ## Project structure
 
