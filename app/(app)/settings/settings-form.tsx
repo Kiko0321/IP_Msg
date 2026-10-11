@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { NotificationPermission } from "@/components/notifications/notification-permission";
 import { THEMES, type Settings, type Theme } from "@/lib/validation/settings";
 import { updateSettings, type SettingsState } from "./actions";
 
@@ -36,6 +37,7 @@ export function SettingsForm({ initial }: { initial: Settings }) {
           <input type="checkbox" name="notifyNewMessages" defaultChecked={values.notifyNewMessages} />
           Notify me about new messages
         </label>
+        <NotificationPermission />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="notifySound" defaultChecked={values.notifySound} />
           Play a sound for new messages
