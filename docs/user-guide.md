@@ -48,6 +48,7 @@ In a group, each message shows who sent it. You're the group's owner.
 - **Live updates:** new messages from others appear by themselves; you don't need to refresh.
 - **Messages:** they're shown oldest to newest, with the date between days. In group chats, each message shows who sent it.
 - **Older messages:** a chat opens on its latest 100 messages. To read further back, press **Load older messages** at the top (50 more each time). **Start of the conversation** means you've reached the first message.
+- **Seen and typing:** under your latest message you'll see **Seen** once the other person has opened the chat (in groups: **Seen by …** or **Seen by everyone**). While someone is writing, "Alice is typing…" appears above the message box.
 - **Online status:** in a one-to-one chat, the header shows **Online** or when the person was **last seen**.
 
 ## Searching messages

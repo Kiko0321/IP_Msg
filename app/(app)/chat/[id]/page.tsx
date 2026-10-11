@@ -17,6 +17,7 @@ type ConversationRow = {
   title: string | null;
   conversation_members: {
     user_id: string;
+    last_read_at: string | null;
     profiles: { display_name: string; avatar_url: string | null; last_seen_at: string | null } | null;
   }[];
 };
@@ -44,7 +45,7 @@ export default async function ChatPage({
   // RLS: non-members get no row, so they see a 404 rather than someone else's chat.
   const { data: conversationData } = await supabase
     .from("conversations")
-    .select("id, kind, title, conversation_members(user_id, profiles(display_name, avatar_url, last_seen_at))")
+    .select("id, kind, title, conversation_members(user_id, last_read_at, profiles(display_name, avatar_url, last_seen_at))")
     .eq("id", id)
     .maybeSingle();
   const conversation = conversationData as unknown as ConversationRow | null;
@@ -96,6 +97,7 @@ export default async function ChatPage({
         isGroup={isGroup}
         hasOlder={messages.length === HISTORY_LIMIT}
         highlightId={highlightId && UUID_PATTERN.test(highlightId) ? highlightId : undefined}
+        readAt={Object.fromEntries(conversation.conversation_members.map((m) => [m.user_id, m.last_read_at]))}
       />
     </main>
   );

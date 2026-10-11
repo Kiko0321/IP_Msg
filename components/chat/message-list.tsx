@@ -17,6 +17,7 @@ export function MessageList({
   onEdit,
   onDelete,
   highlightId,
+  receipt,
 }: {
   messages: DisplayMessage[];
   members: Record<string, ChatMember>;
@@ -31,6 +32,8 @@ export function MessageList({
   onDelete?: (message: DisplayMessage) => Promise<string | undefined>;
   /** MSG-41: scroll to and highlight this message (opened from search). */
   highlightId?: string;
+  /** MSG-42: "Seen …" under this message. */
+  receipt?: { messageId: string; label: string };
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
@@ -159,6 +162,9 @@ export function MessageList({
                 </span>
               )}
             </div>
+            {receipt?.messageId === message.id && (
+              <p className="self-end px-1 text-[10px] text-neutral-500">{receipt.label}</p>
+            )}
             {mine && !message.status && onEdit && onDelete && editingId !== message.id && (
               <MessageActions onEdit={() => setEditingId(message.id)} onDelete={() => onDelete(message)} />
             )}

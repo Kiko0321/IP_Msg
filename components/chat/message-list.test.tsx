@@ -48,3 +48,16 @@ describe("MessageList search result (MSG-41)", () => {
     expect(screen.getByRole("status")).toHaveTextContent("further back");
   });
 });
+
+describe("MessageList receipt (MSG-42)", () => {
+  it("shows the receipt under the given message", () => {
+    const members: Record<string, ChatMember> = { me: { user_id: "me", display_name: "Me", avatar_url: null } };
+    const one: DisplayMessage[] = [
+      { id: "1", sender_id: "me", content: "hi", created_at: "2026-10-11T10:00:00Z", edited_at: null },
+    ];
+    render(
+      <MessageList messages={one} members={members} currentUserId="me" showSenderNames={false} receipt={{ messageId: "1", label: "Seen" }} />,
+    );
+    expect(screen.getByText("Seen")).toBeInTheDocument();
+  });
+});

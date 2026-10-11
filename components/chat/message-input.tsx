@@ -6,9 +6,12 @@ import { MESSAGE_MAX, captionSchema, messageSchema } from "@/lib/validation/mess
 
 export function MessageInput({
   onSend,
+  onTyping,
   disabled,
 }: {
   onSend: (content: string, file?: File) => void;
+  /** MSG-42: called as the user types (the chat throttles it). */
+  onTyping?: () => void;
   disabled?: boolean;
 }) {
   const [value, setValue] = useState("");
@@ -85,7 +88,10 @@ export function MessageInput({
         </button>
         <textarea
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+            if (e.target.value.trim()) onTyping?.();
+          }}
           onKeyDown={(e) => {
             // Enter sends; Shift+Enter adds a new line. Ignore Enter while an IME is composing.
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
