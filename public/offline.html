@@ -30,8 +30,24 @@
       <button type="button" onclick="location.reload()">Try again</button>
     </main>
     <script>
-      // Reload by itself as soon as the connection comes back.
-      window.addEventListener("online", () => location.reload());
+      // Reload by itself once the app answers again. The "online" event alone isn't enough: it can
+      // fire a moment before requests get through (the reload then lands here again), and a device
+      // on Wi-Fi without internet never fires it. So also check every few seconds while visible.
+      let checking = false;
+      async function reloadIfBack() {
+        if (checking || document.visibilityState !== "visible") return;
+        checking = true;
+        try {
+          const response = await fetch("/manifest.webmanifest", { cache: "no-store" });
+          if (response.ok) return location.reload();
+        } catch {
+          // Still offline.
+        }
+        checking = false;
+      }
+      window.addEventListener("online", reloadIfBack);
+      document.addEventListener("visibilitychange", reloadIfBack);
+      setInterval(reloadIfBack, 3000);
     </script>
   </body>
 </html>
