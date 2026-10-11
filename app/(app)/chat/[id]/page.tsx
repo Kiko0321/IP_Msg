@@ -78,6 +78,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
         members={members}
         currentUserId={me}
         isGroup={isGroup}
+        hasOlder={messages.length === HISTORY_LIMIT}
       />
     </main>
   );
